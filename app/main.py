@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.product import Product 
 
-# Crea applicazione FastAPI
+# Create FastAPI application
 app = FastAPI(
     title="E-commerce API",
-    description="API con database PostgreSQL",
+    description="API with PostgreSQL database",
     version="1.0.0"
 )
 
-# CONFIGURAZIONE CORS
+# CORS CONFIGURATION
 origins = [
     "http://localhost:3000",      # React
     "http://localhost:5173",      # Vite
@@ -22,58 +22,58 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,        # Origini permesse
+    allow_origins=origins,        # Allowed origins
     allow_credentials=True,
     allow_methods=["*"],          # GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],          # Tutti gli headers
+    allow_headers=["*"],          # All headers
 )
 
-# ENDPOINT ROOT
+# ROOT ENDPOINT
 
 @app.get("/")
 def root():
-    """Pagina principale"""
+    """Main page"""
     return {
-        "message": "Benvenuto nell'API E-commerce!",
+        "message": "Welcome to E-commerce API!",
         "endpoints": {
-            "prodotti": "/api/prodotti",
+            "products": "/api/products",
             "health": "/health",
             "docs": "/docs"
         }
     }
 
-# ENDPOINT PRODOTTI 
+# PRODUCT ENDPOINTS
 
-# POST   → Creare un nuovo prodotto
-# PUT    → Modificare un prodotto esistente
-# DELETE → Eliminare un prodotto
-# GET    → Ottenere informazioni su prodotto/i (singolo o lista)
+# POST   → Create a new product
+# PUT    → Update an existing product
+# DELETE → Delete a product
+# GET    → Get product information (single or list)
 
-@app.get("/api/prodotti")
-def get_prodotti(db: Session = Depends(get_db)):
+@app.get("/api/products")
+def get_products(db: Session = Depends(get_db)):
     """
-    Ottieni tutti i prodotti dal database.
-    Usa il Model Prodotto per fare query su PostgreSQL.
+    Get all products from database.
+    Uses Product Model to query PostgreSQL.
     """
-    # Query con SQLAlchemy ORM
-    prodotti = db.query(Prodotto).all()
-    return prodotti
+    # Query with SQLAlchemy ORM
+    products = db.query(Product).all()
+    return products
 
-@app.get("/api/prodotti/{prodotto_id}")
-def get_prodotto(prodotto_id: int, db: Session = Depends(get_db)):
+@app.get("/api/products/{product_id}")
+def get_product(product_id: int, db: Session = Depends(get_db)):
     """
-    Ottieni un singolo prodotto per ID.
+    Get a single product by ID.
     """
-    prodotto = db.query(Prodotto).filter(Prodotto.id == prodotto_id).first()
+    product = db.query(Product).filter(Product.id == product_id).first()
     
-    if not prodotto:
-        return {"error": f"Prodotto {prodotto_id} non trovato"}
+    if not product:
+        return {"error": f"Product {product_id} not found"}
     
-    return prodotto
+    return product
 
 # HEALTH CHECK
 
 @app.get("/health")
 def health():
-    """Verifica che API sia attiva"""
+    """Check if API is active"""
     return {"status": "ok"}

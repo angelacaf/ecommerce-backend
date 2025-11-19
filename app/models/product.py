@@ -1,22 +1,44 @@
-from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, Text
-from sqlalchemy.sql import func
+"""
+Product model - rappresenta un prodotto nel database
+"""
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text
+
 from app.database import Base
 
+
 class Product(Base):
-    """Model for products table"""
+    """
+    Modello Product per la tabella products nel database.
     
-    # Table name in database - METADATA (configuration)
+    Attributi:
+        id: ID univoco del prodotto
+        name: Nome del prodotto
+        description: Descrizione dettagliata
+        price: Prezzo del prodotto
+        available_quantity: Quantità disponibile in magazzino
+        image_url: URL dell'immagine del prodotto
+        sku: Codice SKU del prodotto
+        active: Se il prodotto è attivo/visibile
+        featured: Se il prodotto è in evidenza
+        created_at: Data di creazione
+        updated_at: Data ultimo aggiornamento
+    """
     __tablename__ = "products"
     
-    # Columns (as in PostgreSQL table) - COLUMN DESCRIPTORS (map SQL columns)
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text)
-    price = Column(Numeric(10, 2), nullable=False)
-    available_quantity = Column(Integer, nullable=False, default=0)
-    image_url = Column(String(500))
-    sku = Column(String(100), unique=True)
-    active = Column(Boolean, default=True)
-    featured = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    name = Column(String(200), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
+    available_quantity = Column(Integer, default=0, nullable=False)
+    image_url = Column(String(500), nullable=True)
+    sku = Column(String(100), nullable=True, unique=True, index=True)
+    active = Column(Boolean, default=True, nullable=False)
+    featured = Column(Boolean, default=False, nullable=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    def __repr__(self):
+        return f"<Product(id={self.id}, name='{self.name}', sku='{self.sku}', price={self.price})>"

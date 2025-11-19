@@ -1,79 +1,56 @@
-from fastapi import FastAPI, Depends
+"""
+FastAPI E-commerce Backend
+"""
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.models.product import Product 
 
-# Create FastAPI application
+from app.database import engine, Base
+from app.api import products
+
+# Crea tabelle database
+Base.metadata.create_all(bind=engine)
+
+# Inizializza FastAPI
 app = FastAPI(
     title="E-commerce API",
-    description="API with PostgreSQL database",
+    description="Backend REST API per e-commerce",
     version="1.0.0"
 )
 
-# CORS CONFIGURATION
-origins = [
-    "http://localhost:3000",      # React
-    "http://localhost:5173",      # Vite
-    "http://localhost:4200",      # Angular
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-]
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,        # Allowed origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],          # GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],          # All headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ROOT ENDPOINT
+
+# ==================== HOME ====================
 
 @app.get("/")
-def root():
-    """Main page"""
+def home():
     return {
-        "message": "Welcome to E-commerce API!",
-        "endpoints": {
-            "products": "/api/products",
-            "health": "/health",
-            "docs": "/docs"
-        }
+        "message": "E-commerce API",
+        "version": "1.0.0",
+        "docs": "/docs"
     }
 
-# PRODUCT ENDPOINTS
 
-# POST   → Create a new product
-# PUT    → Update an existing product
-# DELETE → Delete a product
-# GET    → Get product information (single or list)
+# ==================== INCLUDE ROUTERS ====================
 
-@app.get("/api/products")
-def get_products(db: Session = Depends(get_db)):
-    """
-    Get all products from database.
-    Uses Product Model to query PostgreSQL.
-    """
-    # Query with SQLAlchemy ORM
-    products = db.query(Product).all()
-    return products
+# Products endpoints
+app.include_router(products.router, prefix="/api", tags=["Products"])
 
-@app.get("/api/products/{product_id}")
-def get_product(product_id: int, db: Session = Depends(get_db)):
-    """
-    Get a single product by ID.
-    """
-    product = db.query(Product).filter(Product.id == product_id).first()
-    
-    if not product:
-        return {"error": f"Product {product_id} not found"}
-    
-    return product
+# Quando aggiungerai altri modelli:
+# app.include_router(users.router, prefix="/api", tags=["Users"])
+# app.include_router(orders.router, prefix="/api", tags=["Orders"])
+# app.include_router(categories.router, prefix="/api", tags=["Categories"])
 
-# HEALTH CHECK
 
-@app.get("/health")
-def health():
-    """Check if API is active"""
-    return {"status": "ok"}
+# ==================== AVVIO ====================
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

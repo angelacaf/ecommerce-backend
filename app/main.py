@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.prodotto import Prodotto
@@ -10,6 +11,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CONFIGURAZIONE CORS
+origins = [
+    "http://localhost:3000",      # React
+    "http://localhost:5173",      # Vite
+    "http://localhost:4200",      # Angular
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # Origini permesse
+    allow_credentials=True,
+    allow_methods=["*"],          # GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],          # Tutti gli headers
+)
+
 # ENDPOINT ROOT
 
 @app.get("/")
@@ -18,21 +36,20 @@ def root():
     return {
         "message": "Benvenuto nell'API E-commerce!",
         "endpoints": {
-            "prodotti": "/prodotti",
+            "prodotti": "/api/prodotti",
+            "health": "/health",
             "docs": "/docs"
         }
     }
 
 # ENDPOINT PRODOTTI 
 
-
 # POST   → Creare un nuovo prodotto
 # PUT    → Modificare un prodotto esistente
 # DELETE → Eliminare un prodotto
 # GET    → Ottenere informazioni su prodotto/i (singolo o lista)
 
-# vedere altri endpoint
-@app.get("/prodotti")
+@app.get("/api/prodotti")
 def get_prodotti(db: Session = Depends(get_db)):
     """
     Ottieni tutti i prodotti dal database.
@@ -42,7 +59,7 @@ def get_prodotti(db: Session = Depends(get_db)):
     prodotti = db.query(Prodotto).all()
     return prodotti
 
-@app.get("/prodotti/{prodotto_id}")
+@app.get("/api/prodotti/{prodotto_id}")
 def get_prodotto(prodotto_id: int, db: Session = Depends(get_db)):
     """
     Ottieni un singolo prodotto per ID.
@@ -53,8 +70,6 @@ def get_prodotto(prodotto_id: int, db: Session = Depends(get_db)):
         return {"error": f"Prodotto {prodotto_id} non trovato"}
     
     return prodotto
-
-
 
 # HEALTH CHECK
 

@@ -31,6 +31,7 @@ def root():
 # DELETE → Eliminare un prodotto
 # GET    → Ottenere informazioni su prodotto/i (singolo o lista)
 
+# vedere altri endpoint
 @app.get("/prodotti")
 def get_prodotti(db: Session = Depends(get_db)):
     """

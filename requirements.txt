@@ -7,3 +7,5 @@ passlib
 pydantic
 SQLAlchemy
 pydantic[email]
+pytest
+pytest-asyncio

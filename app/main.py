@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.api import products
+from app.api import products, clients
 
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
@@ -31,10 +31,52 @@ app.add_middleware(
 
 @app.get("/")
 def home():
+    """
+    Endpoint root - Restituisce informazioni sull'API e lista degli endpoint disponibili
+    """
     return {
         "message": "E-commerce API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc"
+        },
+        "endpoints": {
+            "products": {
+                "list": "GET /api/products",
+                "get": "GET /api/products/{id}",
+                "create": "POST /api/products",
+                "update": "PUT /api/products/{id}",
+                "delete": "DELETE /api/products/{id}"
+            },
+            "clients": {
+                "register": "POST /api/clients/register",
+                "login": "POST /api/clients/login",
+                "list": "GET /api/clients",
+                "get": "GET /api/clients/{id}",
+                "get_by_email": "GET /api/clients/email/{email}",
+                "update": "PUT /api/clients/{id}",
+                "change_password": "POST /api/clients/{id}/change-password",
+                "delete": "DELETE /api/clients/{id}"
+            },
+            "orders": {
+                "note": "Coming soon..."
+            }
+        },
+        "status": "running"
+    }
+
+
+# ==================== HEALTH CHECK ====================
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint - per verificare che l'API sia online
+    """
+    return {
+        "status": "healthy",
+        "version": "1.0.0"
     }
 
 
@@ -43,10 +85,11 @@ def home():
 # Products endpoints
 app.include_router(products.router, prefix="/api", tags=["Products"])
 
-# Quando aggiungerai altri modelli:
-# app.include_router(users.router, prefix="/api", tags=["Users"])
+# Clients endpoints
+app.include_router(clients.router, prefix="/api", tags=["Clients"])
+
+# Orders endpoints (da implementare)
 # app.include_router(orders.router, prefix="/api", tags=["Orders"])
-# app.include_router(categories.router, prefix="/api", tags=["Categories"])
 
 
 # ==================== AVVIO ====================

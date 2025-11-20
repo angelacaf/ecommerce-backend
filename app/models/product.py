@@ -39,6 +39,3 @@ class Product(Base):
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
-    
-    def __repr__(self):
-        return f"<Product(id={self.id}, name='{self.name}', sku='{self.sku}', price={self.price})>"

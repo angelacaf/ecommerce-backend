@@ -7,10 +7,24 @@ from app.schemas.product import (
     ProductUpdate,
     ProductResponse
 )
+from app.schemas.client import (  
+    ClientBase,
+    ClientCreate,
+    ClientUpdate,
+    ClientResponse,
+    ClientLogin,
+    ClientChangePassword
+)
 
 __all__ = [
     "ProductBase",
     "ProductCreate",
     "ProductUpdate",
-    "ProductResponse"
+    "ProductResponse",
+    "ClientBase",
+    "ClientCreate",
+    "ClientUpdate",
+    "ClientResponse",
+    "ClientLogin",
+    "ClientChangePassword"
 ]

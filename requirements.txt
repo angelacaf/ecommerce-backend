@@ -3,3 +3,7 @@ dotenv
 psycopg2
 uvicorn
 fastapi
+passlib
+pydantic
+SQLAlchemy
+pydantic[email]

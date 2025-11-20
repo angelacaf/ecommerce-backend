@@ -2,5 +2,8 @@
 CRUD Operations
 """
 from app.crud import product
-# Espone il modulo product per importarlo facilmente
-__all__ = ["product"]
+from app.crud import client 
+
+# Espone il modulo per importarlo facilmente
+__all__ = ["product", "client"] 
+

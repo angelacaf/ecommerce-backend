@@ -3,11 +3,11 @@
 1. Crea virtual environment: `python -m venv venv`
 2. Attiva: `.\venv\Scripts\activate` 
 3. Installa dipendenze: `pip install -r requirements.txt`
+4. Importa database:
+   - Apri pgAdmin → Crea database "ecommerce"
+   - Click destro sul database → Restore
+   - Format: Plain, Filename: `ecommerce-backend/ecommerce_en_db.sql`
 
-
-# ecommerce-backend
-
-C:\Users\AngelaCafà\Desktop>C:/Users/AngelaCafà/Desktop/ecommerce-project/ecommerce-backend/venv/Scripts/activate.bat
 
 # avvio be
 uvicorn app.main:app --reload

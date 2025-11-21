@@ -1,0 +1,41 @@
+-- ============================================================
+-- CREA TABELLA CATEGORIES + 8 CATEGORIE
+-- Esegui questo in pgAdmin
+-- ============================================================
+ 
+-- 1. CREA TABELLA
+
+DROP TABLE IF EXISTS categories CASCADE;
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE
+);
+ 
+-- 2. INDICI
+
+CREATE INDEX idx_categories_name ON categories(name);
+CREATE INDEX idx_categories_active ON categories(active);
+ 
+-- 3. INSERISCI 8 CATEGORIE
+
+INSERT INTO categories (name, description, active) VALUES
+('Food', 'Prodotti alimentari e bevande', TRUE),
+('Elettronica', 'Dispositivi elettronici, computer, smartphone e accessori', TRUE),
+('Moda', 'Abbigliamento, scarpe e accessori moda', TRUE),
+('Sport', 'Articoli sportivi e attrezzature per il fitness', TRUE),
+('Motori', 'Auto, moto e accessori per veicoli', TRUE),
+('Collezionismo', 'Oggetti da collezione, antiquariato e memorabilia', TRUE),
+('Black Friday', 'Super sconti e offerte speciali Black Friday', TRUE),
+('Natale', 'Decorazioni natalizie, regali e articoli per le feste', TRUE);
+ 
+-- 4. MODIFICA TABELLA PRODUCTS
+ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id INTEGER;
+ALTER TABLE products ADD CONSTRAINT fk_products_category 
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
+
+-- 5. VERIFICA
+SELECT * FROM categories ORDER BY id;
+ 

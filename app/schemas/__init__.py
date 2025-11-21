@@ -15,6 +15,14 @@ from app.schemas.client import (
     ClientLogin,
     ClientChangePassword
 )
+from app.schemas.order import (
+    OrderItemCreate,
+    OrderItemResponse,
+    OrderCreate,
+    OrderResponse,
+    OrderListResponse,
+    OrderStatusUpdate
+)
 
 __all__ = [
     "ProductBase",
@@ -26,5 +34,11 @@ __all__ = [
     "ClientUpdate",
     "ClientResponse",
     "ClientLogin",
-    "ClientChangePassword"
+    "ClientChangePassword",
+    "OrderItemCreate",
+    "OrderItemResponse",
+    "OrderCreate",
+    "OrderResponse",
+    "OrderListResponse",
+    "OrderStatusUpdate"
 ]

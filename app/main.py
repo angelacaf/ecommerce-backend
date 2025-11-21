@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.api import products, clients
+from app.api import products, clients, orders
 
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
@@ -60,7 +60,11 @@ def home():
                 "delete": "DELETE /api/clients/{id}"
             },
             "orders": {
-                "note": "Coming soon..."
+                "create": "POST /api/orders",
+                "list": "GET /api/orders",
+                "get": "GET /api/orders/{id}",
+                "update_status": "PATCH /api/orders/{id}/status",
+                "cancel": "DELETE /api/orders/{id}"
             }
         },
         "status": "running"
@@ -88,8 +92,8 @@ app.include_router(products.router, prefix="/api", tags=["Products"])
 # Clients endpoints
 app.include_router(clients.router, prefix="/api", tags=["Clients"])
 
-# Orders endpoints (da implementare)
-# app.include_router(orders.router, prefix="/api", tags=["Orders"])
+# Orders endpoints
+app.include_router(orders.router, prefix="/api", tags=["Orders"])
 
 
 # ==================== AVVIO ====================

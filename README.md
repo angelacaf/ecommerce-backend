@@ -16,3 +16,20 @@ uvicorn app.main:app --reload
 npm run dev
 
 
+TODO: registrazione -> login -> ordine
+
+
+CRUD ordine
+
+CREATE:
+add() → flush() → [usa ID] → add(dettagli) → commit() → refresh()
+
+READ:
+query() → filter() → [first() o all()]
+
+UPDATE:
+query() → modifica attributi → commit() → refresh()
+
+DELETE:
+query() → delete() → commit()
+

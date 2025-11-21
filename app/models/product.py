@@ -3,6 +3,7 @@ Product model - rappresenta un prodotto nel database
 """
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -39,3 +40,6 @@ class Product(Base):
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    # Relazioni
+    order_details = relationship("OrderDetail", back_populates="product")

@@ -7,7 +7,11 @@
    - Apri pgAdmin → Crea database "ecommerce"
    - Click destro sul database → Restore
    - Format: Plain, Filename: `ecommerce-backend/ecommerce_en_db.sql`
-
+5. Configurazione ambiente
+   - .env in fe   ->   VITE_BACKEND_URL=[your_backend_url_here/api]
+      ad esempio       VITE_BACKEND_URL=http://localhost:8000/api
+   - .env in be   ->   DATABASE_URL=postgresql://USERNAME:PASSWORD@HOST:PORT/DATABASE
+      ad esempio       DATABASE_URL=postgresql://postgres:root@localhost:5432/ecommerce 
 
 # avvio be
 uvicorn app.main:app --reload
@@ -16,20 +20,6 @@ uvicorn app.main:app --reload
 npm run dev
 
 
-TODO: registrazione -> login -> ordine
 
 
-CRUD ordine
-
-CREATE:
-add() → flush() → [usa ID] → add(dettagli) → commit() → refresh()
-
-READ:
-query() → filter() → [first() o all()]
-
-UPDATE:
-query() → modifica attributi → commit() → refresh()
-
-DELETE:
-query() → delete() → commit()
 

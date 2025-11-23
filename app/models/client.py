@@ -20,7 +20,7 @@ class Client(Base):
         last_name: Cognome
         phone: Numero di telefono
         address: Indirizzo
-        city: Città
+        city: Citta
         postal_code: CAP
         state: Provincia/Stato
         country: Nazione (default: Italy)
@@ -30,7 +30,8 @@ class Client(Base):
         updated_at: Data ultimo aggiornamento
     """
     __tablename__ = "clients"
-    
+    __table_args__ = {'schema': 'ecommerce'}
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), nullable=False, unique=True, index=True)
     password_hash = Column(String(255), nullable=False)
@@ -42,7 +43,7 @@ class Client(Base):
     postal_code = Column(String(10), nullable=True)
     state = Column(String(50), nullable=True)
     country = Column(String(100), default="Italy", nullable=True)
-    active = Column(Boolean, default=True, nullable=False)
+    active = Column(Boolean, default=True, nullable=False, index=True) 
     email_verified = Column(Boolean, default=False, nullable=False)
     
     # Timestamps

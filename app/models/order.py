@@ -25,7 +25,7 @@ class Order(Base):
         discount: Sconto applicato
         discount_code: Codice sconto usato
         shipping_address: Indirizzo spedizione
-        shipping_city: Città spedizione
+        shipping_city: Citta spedizione
         shipping_postal_code: CAP spedizione
         shipping_state: Provincia/Stato spedizione
         shipping_country: Nazione spedizione
@@ -41,7 +41,7 @@ class Order(Base):
     __tablename__ = "orders"
     
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey("ecommerce.clients.id", ondelete="CASCADE"), nullable=False, index=True)
     order_number = Column(String(50), nullable=False, unique=True, index=True)
     status = Column(
         String(50), 
@@ -90,6 +90,7 @@ class Order(Base):
             "status IN ('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded')",
             name='orders_status_check'
         ),
+        {'schema': 'ecommerce'},
     )
     
     # Relazioni
@@ -112,8 +113,8 @@ class OrderDetail(Base):
     __tablename__ = "order_details"
     
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey("products.id", ondelete="RESTRICT"), nullable=False, index=True)
+    order_id = Column(Integer, ForeignKey("ecommerce.orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("ecommerce.products.id", ondelete="RESTRICT"), nullable=False, index=True)
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     subtotal = Column(Numeric(10, 2), nullable=False)
@@ -123,6 +124,7 @@ class OrderDetail(Base):
         CheckConstraint('quantity > 0', name='order_details_quantity_check'),
         CheckConstraint('unit_price >= 0', name='order_details_unit_price_check'),
         CheckConstraint('subtotal >= 0', name='order_details_subtotal_check'),
+        {'schema': 'ecommerce'},
     )
     
     # Relazioni

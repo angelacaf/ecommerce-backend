@@ -20,6 +20,70 @@ def get_products(db: Session, skip: int = 0, limit: int = 100) -> list[Product]:
     return db.query(Product).filter(Product.active == True).offset(skip).limit(limit).all()
 
 
+def search_products_by_name(
+    db: Session, 
+    search_term: str, 
+    active_only: bool = True,
+    skip: int = 0, 
+    limit: int = 100
+) -> list[Product]:
+    """
+    Cerca prodotti per nome (ricerca parziale, case-insensitive)
+    
+    Args:
+        db: Sessione database
+        search_term: Termine da cercare nel nome
+        active_only: Se True, cerca solo tra prodotti attivi
+        skip: Record da saltare (paginazione)
+        limit: Numero massimo di risultati
+        
+    Returns:
+        Lista di prodotti che matchano la ricerca
+        
+    Example:
+        # Cerca "shirt"
+        products = search_products_by_name(db, "shirt")
+        # Trova: "Red T-Shirt", "Blue Shirt", "Shirt XL"
+    """
+    query = db.query(Product).filter(Product.name.ilike(f"%{search_term}%"))
+    
+    if active_only:
+        query = query.filter(Product.active == True)
+    
+    return query.offset(skip).limit(limit).all()
+
+
+def get_product_by_exact_name(db: Session, name: str) -> Optional[Product]:
+    """
+    Ottieni un prodotto per nome esatto (case-insensitive)
+    
+    Args:
+        db: Sessione database
+        name: Nome esatto del prodotto
+        
+    Returns:
+        Prodotto trovato o None
+        
+    Example:
+        product = get_product_by_exact_name(db, "Red T-Shirt")
+    """
+    return db.query(Product).filter(Product.name.ilike(name)).first()
+
+
+def get_product_by_sku(db: Session, sku: str) -> Optional[Product]:
+    """
+    Ottieni un prodotto per SKU
+    
+    Args:
+        db: Sessione database
+        sku: Codice SKU del prodotto
+        
+    Returns:
+        Prodotto trovato o None
+    """
+    return db.query(Product).filter(Product.sku == sku).first()
+
+
 # ==================== CREA ====================
 
 def create_product(db: Session, product: ProductCreate) -> Product:

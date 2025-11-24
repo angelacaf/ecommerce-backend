@@ -20,8 +20,8 @@ from app.schemas.order import (
 )
 
 router = APIRouter(
-    prefix="/orders",
-    # tags=["orders"]
+    prefix="/orders"
+    # , tags=["orders"]
 )
 
 # user ID fisso per testing

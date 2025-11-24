@@ -44,7 +44,9 @@ def home():
         "endpoints": {
             "products": {
                 "list": "GET /api/products",
+                "search": "GET /api/products/search?q=shirt",
                 "get": "GET /api/products/{id}",
+                "get_by_sku": "GET /api/products/sku/{sku}",  
                 "create": "POST /api/products",
                 "update": "PUT /api/products/{id}",
                 "delete": "DELETE /api/products/{id}"
@@ -68,6 +70,7 @@ def home():
             },
             "categories": {  
                 "list": "GET /api/categories",
+                "search": "GET /api/categories/search?q=sport",  
                 "get": "GET /api/categories/{id}"
             }
         },

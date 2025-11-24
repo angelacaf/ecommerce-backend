@@ -90,7 +90,7 @@ def health_check():
 app.include_router(products.router, prefix="/api", tags=["Products"])
 
 # users endpoints
-app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(users.router, prefix="/api", tags=["Users"])
 
 # Orders endpoints
 app.include_router(orders.router, prefix="/api", tags=["Orders"])

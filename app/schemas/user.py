@@ -1,13 +1,13 @@
 """
-Client Schemas - Validazione dati per Client
+user Schemas - Validazione dati per user
 """
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
-class ClientBase(BaseModel):
-    """Campi base del cliente"""
+class userBase(BaseModel):
+    """Campi base del usere"""
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
@@ -19,13 +19,13 @@ class ClientBase(BaseModel):
     country: str = Field(default="Italy", max_length=100)
 
 
-class ClientCreate(ClientBase):
-    """Per registrare un nuovo cliente"""
+class userCreate(userBase):
+    """Per registrare un nuovo usere"""
     password: str = Field(..., min_length=6, max_length=100)
 
 
-class ClientUpdate(BaseModel):
-    """Per aggiornare un cliente (tutti i campi opzionali)"""
+class userUpdate(BaseModel):
+    """Per aggiornare un usere (tutti i campi opzionali)"""
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -39,13 +39,13 @@ class ClientUpdate(BaseModel):
     email_verified: Optional[bool] = None
 
 
-class ClientChangePassword(BaseModel):
+class userChangePassword(BaseModel):
     """Per cambiare password"""
     old_password: str = Field(..., min_length=6, max_length=100)
     new_password: str = Field(..., min_length=6, max_length=100)
 
 
-class ClientResponse(ClientBase):
+class userResponse(userBase):
     """Risposta API - include campi dal database (NO password_hash)"""
     id: int
     active: bool
@@ -56,7 +56,7 @@ class ClientResponse(ClientBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ClientLogin(BaseModel):
+class userLogin(BaseModel):
     """Per login"""
     email: EmailStr
     password: str

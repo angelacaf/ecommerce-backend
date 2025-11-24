@@ -2,8 +2,8 @@
 CRUD Operations
 """
 from app.crud import product
-from app.crud import client 
+from app.crud import user 
 
 # Espone il modulo per importarlo facilmente
-__all__ = ["product", "client"] 
+__all__ = ["product", "user"] 
 

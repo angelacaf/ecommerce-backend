@@ -52,7 +52,7 @@ class OrderResponse(BaseModel):
     """Schema per la risposta completa di un ordine"""
     id: int
     order_number: str
-    client_id: int
+    user_id: int
     status: str
     total: Decimal
     subtotal: Decimal

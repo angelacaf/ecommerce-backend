@@ -65,7 +65,7 @@ CREATE INDEX idx_products_category_id ON ecommerce.products(category_id);
 
 CREATE TABLE ecommerce.orders (
     id SERIAL PRIMARY KEY,
-    client_id INTEGER NOT NULL REFERENCES ecommerce.users(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES ecommerce.users(id) ON DELETE CASCADE,
     order_number VARCHAR(50) NOT NULL UNIQUE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending','paid','processing','shipped','delivered','cancelled','refunded')),
@@ -90,7 +90,7 @@ CREATE TABLE ecommerce.orders (
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_orders_client ON ecommerce.orders(client_id);
+CREATE INDEX idx_orders_user ON ecommerce.orders(user_id);
 CREATE INDEX idx_orders_created ON ecommerce.orders(created_at);
 CREATE INDEX idx_orders_number ON ecommerce.orders(order_number);
 CREATE INDEX idx_orders_status ON ecommerce.orders(status);
@@ -130,7 +130,7 @@ INSERT INTO ecommerce.products (name, description, price, available_quantity, sk
 ('Gray Hoodie', 'Hoodie with hood', 39.99, 75, 'HOO-GRAY-001', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
 ('Black Jacket', 'Waterproof jacket', 79.99, 20, 'JAC-BLK-001', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3);
 
-INSERT INTO ecommerce.orders (client_id, order_number, status, total, subtotal, shipping_cost, tax, discount, shipping_address, shipping_city, shipping_postal_code, shipping_country, paid, paid_at, created_at, updated_at) VALUES
+INSERT INTO ecommerce.orders (user_id, order_number, status, total, subtotal, shipping_cost, tax, discount, shipping_address, shipping_city, shipping_postal_code, shipping_country, paid, paid_at, created_at, updated_at) VALUES
 (1, 'ORD-2024-001', 'delivered', 124.98, 119.98, 5.00, 0.00, 0.00, 'Via Roma 1', 'Rome', '00100', 'Italy', true, '2024-11-10 14:30:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (1, 'ORD-2024-002', 'shipped', 89.99, 89.99, 0.00, 0.00, 0.00, 'Via Roma 1', 'Rome', '00100', 'Italy', true, '2024-11-15 10:20:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 'ORD-2024-003', 'paid', 69.98, 59.98, 10.00, 0.00, 0.00, 'Via Milano 5', 'Milan', '20100', 'Italy', true, '2024-11-17 09:15:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

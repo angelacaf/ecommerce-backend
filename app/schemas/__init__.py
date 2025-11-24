@@ -7,13 +7,13 @@ from app.schemas.product import (
     ProductUpdate,
     ProductResponse
 )
-from app.schemas.client import (  
-    ClientBase,
-    ClientCreate,
-    ClientUpdate,
-    ClientResponse,
-    ClientLogin,
-    ClientChangePassword
+from app.schemas.user import (  
+    userBase,
+    userCreate,
+    userUpdate,
+    userResponse,
+    userLogin,
+    userChangePassword
 )
 from app.schemas.order import (
     OrderItemCreate,
@@ -29,12 +29,12 @@ __all__ = [
     "ProductCreate",
     "ProductUpdate",
     "ProductResponse",
-    "ClientBase",
-    "ClientCreate",
-    "ClientUpdate",
-    "ClientResponse",
-    "ClientLogin",
-    "ClientChangePassword",
+    "userBase",
+    "userCreate",
+    "userUpdate",
+    "userResponse",
+    "userLogin",
+    "userChangePassword",
     "OrderItemCreate",
     "OrderItemResponse",
     "OrderCreate",

@@ -5,14 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db_connection import get_db
-from app.schemas.client import (
-    ClientCreate, 
-    ClientUpdate, 
-    ClientResponse, 
-    ClientLogin,
-    ClientChangePassword
+from app.schemas.user import (
+    userCreate, 
+    userUpdate, 
+    userResponse, 
+    userLogin,
+    userChangePassword
 )
-from app.crud import client as crud_client
+from app.crud import user as crud_user
 
 # Crea router per users
 router = APIRouter()
@@ -20,130 +20,130 @@ router = APIRouter()
 
 # ==================== REGISTRAZIONE & LOGIN ====================
 
-@router.post("/users/register", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
-def register_client(client: ClientCreate, db: Session = Depends(get_db)):
+@router.post("/users/register", response_model=userResponse, status_code=status.HTTP_201_CREATED)
+def register_user(user: userCreate, db: Session = Depends(get_db)):
     """
-    Registra un nuovo cliente
+    Registra un nuovo usere
     
     - Verifica che l'email non sia già registrata
     - Hash della password
-    - Crea il nuovo cliente
+    - Crea il nuovo usere
     """
     # Verifica se email già esiste
-    existing_client = crud_client.get_client_by_email(db, client.email)
-    if existing_client:
+    existing_user = crud_user.get_user_by_email(db, user.email)
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email già registrata"
         )
     
-    return crud_client.create_client(db, client)
+    return crud_user.create_user(db, user)
 
 
-@router.post("/users/login", response_model=ClientResponse)
-def login_client(credentials: ClientLogin, db: Session = Depends(get_db)):
+@router.post("/users/login", response_model=userResponse)
+def login_user(credentials: userLogin, db: Session = Depends(get_db)):
     """
-    Login cliente
+    Login usere
     
     - Verifica email e password
-    - Restituisce i dati del cliente (in produzione restituirebbe un JWT token)
+    - Restituisce i dati del usere (in produzione restituirebbe un JWT token)
     """
-    client = crud_client.authenticate_client(db, credentials.email, credentials.password)
-    if not client:
+    user = crud_user.authenticate_user(db, credentials.email, credentials.password)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o password non corretti"
         )
     
-    return client
+    return user
 
 
 # ==================== CRUD users ====================
 
-@router.get("/users", response_model=list[ClientResponse])
+@router.get("/users", response_model=list[userResponse])
 def list_users(skip: int = 0, limit: int = 20, active_only: bool = True, db: Session = Depends(get_db)):
     """
-    Lista clienti
+    Lista useri
     
     - skip: numero di record da saltare (per paginazione)
     - limit: numero massimo di record da restituire
-    - active_only: se True, restituisce solo clienti attivi
+    - active_only: se True, restituisce solo useri attivi
     """
-    return crud_client.get_users(db, skip, limit, active_only)
+    return crud_user.get_users(db, skip, limit, active_only)
 
 
-@router.get("/users/{client_id}", response_model=ClientResponse)
-def get_client(client_id: int, db: Session = Depends(get_db)):
-    """Dettaglio cliente"""
-    client = crud_client.get_client(db, client_id)
-    if not client:
+@router.get("/users/{user_id}", response_model=userResponse)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    """Dettaglio usere"""
+    user = crud_user.get_user(db, user_id)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente non trovato"
+            detail="usere non trovato"
         )
-    return client
+    return user
 
 
-@router.get("/users/email/{email}", response_model=ClientResponse)
-def get_client_by_email(email: str, db: Session = Depends(get_db)):
-    """Ottieni cliente per email"""
-    client = crud_client.get_client_by_email(db, email)
-    if not client:
+@router.get("/users/email/{email}", response_model=userResponse)
+def get_user_by_email(email: str, db: Session = Depends(get_db)):
+    """Ottieni usere per email"""
+    user = crud_user.get_user_by_email(db, email)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente non trovato"
+            detail="usere non trovato"
         )
-    return client
+    return user
 
 
-@router.put("/users/{client_id}", response_model=ClientResponse)
-def update_client(client_id: int, client_update: ClientUpdate, db: Session = Depends(get_db)):
+@router.put("/users/{user_id}", response_model=userResponse)
+def update_user(user_id: int, user_update: userUpdate, db: Session = Depends(get_db)):
     """
-    Aggiorna cliente
+    Aggiorna usere
     
     - Aggiorna solo i campi forniti
     - Non può modificare la password (usa l'endpoint dedicato)
     """
-    client = crud_client.update_client(db, client_id, client_update)
-    if not client:
+    user = crud_user.update_user(db, user_id, user_update)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente non trovato"
+            detail="usere non trovato"
         )
-    return client
+    return user
 
 
-@router.post("/users/{client_id}/change-password", response_model=ClientResponse)
-def change_password(client_id: int, password_data: ClientChangePassword, db: Session = Depends(get_db)):
+@router.post("/users/{user_id}/change-password", response_model=userResponse)
+def change_password(user_id: int, password_data: userChangePassword, db: Session = Depends(get_db)):
     """
-    Cambia password del cliente
+    Cambia password del usere
     
     - Verifica la vecchia password
     - Imposta la nuova password
     """
-    client = crud_client.change_password(
+    user = crud_user.change_password(
         db, 
-        client_id, 
+        user_id, 
         password_data.old_password, 
         password_data.new_password
     )
-    if not client:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cliente non trovato o password non corretta"
+            detail="usere non trovato o password non corretta"
         )
-    return client
+    return user
 
 
-@router.delete("/users/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_client(client_id: int, db: Session = Depends(get_db)):
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
     """
-    Elimina cliente (soft delete)
+    Elimina usere (soft delete)
     
     - Imposta active=False invece di eliminare il record
     """
-    if not crud_client.delete_client(db, client_id):
+    if not crud_user.delete_user(db, user_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente non trovato"
+            detail="usere non trovato"
         )

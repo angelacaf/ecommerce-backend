@@ -15,7 +15,7 @@ class Order(Base):
     
     Attributi:
         id: ID univoco dell'ordine
-        client_id: ID del cliente (FK)
+        user_id: ID del usere (FK)
         order_number: Numero ordine univoco
         status: Stato ordine (pending, paid, processing, shipped, delivered, cancelled, refunded)
         total: Totale ordine
@@ -41,7 +41,7 @@ class Order(Base):
     __tablename__ = "orders"
     
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("ecommerce.users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("ecommerce.users.id", ondelete="CASCADE"), nullable=False, index=True)
     order_number = Column(String(50), nullable=False, unique=True, index=True)
     status = Column(
         String(50), 
@@ -94,7 +94,7 @@ class Order(Base):
     )
     
     # Relazioni
-    client = relationship("Client", back_populates="orders")
+    user = relationship("user", back_populates="orders")
     order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")
 
 

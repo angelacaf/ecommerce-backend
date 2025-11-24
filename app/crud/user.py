@@ -1,12 +1,12 @@
 """
-CRUD operations per Client
+CRUD operations per user
 """
 from typing import Optional
 from sqlalchemy.orm import Session
 import bcrypt
 
-from app.models.client import Client
-from app.schemas.client import ClientCreate, ClientUpdate
+from app.models.user import user
+from app.schemas.user import userCreate, userUpdate
 
 
 # ==================== UTILITY ====================
@@ -28,98 +28,98 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # ==================== LEGGI ====================
 
-def get_client(db: Session, client_id: int) -> Optional[Client]:
-    """Ottieni un cliente per ID"""
-    return db.query(Client).filter(Client.id == client_id).first()
+def get_user(db: Session, user_id: int) -> Optional[user]:
+    """Ottieni un usere per ID"""
+    return db.query(user).filter(user.id == user_id).first()
 
 
-def get_client_by_email(db: Session, email: str) -> Optional[Client]:
-    """Ottieni un cliente per email"""
-    return db.query(Client).filter(Client.email == email).first()
+def get_user_by_email(db: Session, email: str) -> Optional[user]:
+    """Ottieni un usere per email"""
+    return db.query(user).filter(user.email == email).first()
 
 
-def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[Client]:
-    """Ottieni lista clienti"""
-    query = db.query(Client)
+def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[user]:
+    """Ottieni lista useri"""
+    query = db.query(user)
     if active_only:
-        query = query.filter(Client.active == True)
+        query = query.filter(user.active == True)
     return query.offset(skip).limit(limit).all()
 
 
 # ==================== CREA ====================
 
-def create_client(db: Session, client: ClientCreate) -> Client:
-    """Registra nuovo cliente"""
+def create_user(db: Session, user: userCreate) -> user:
+    """Registra nuovo usere"""
     # Hash password
-    hashed_password = hash_password(client.password)
+    hashed_password = hash_password(user.password)
     
-    # Crea client senza il campo password
-    client_data = client.model_dump(exclude={'password'})
-    db_client = Client(**client_data, password_hash=hashed_password)
+    # Crea user senza il campo password
+    user_data = user.model_dump(exclude={'password'})
+    db_user = user(**user_data, password_hash=hashed_password)
     
-    db.add(db_client)
+    db.add(db_user)
     db.commit()
-    db.refresh(db_client)
-    return db_client
+    db.refresh(db_user)
+    return db_user
 
 
 # ==================== AGGIORNA ====================
 
-def update_client(db: Session, client_id: int, client_update: ClientUpdate) -> Optional[Client]:
-    """Aggiorna cliente"""
-    db_client = get_client(db, client_id)
-    if not db_client:
+def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[user]:
+    """Aggiorna usere"""
+    db_user = get_user(db, user_id)
+    if not db_user:
         return None
     
     # Aggiorna solo i campi forniti
-    update_data = client_update.model_dump(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        setattr(db_client, field, value)
+        setattr(db_user, field, value)
     
     db.commit()
-    db.refresh(db_client)
-    return db_client
+    db.refresh(db_user)
+    return db_user
 
 
-def change_password(db: Session, client_id: int, old_password: str, new_password: str) -> Optional[Client]:
-    """Cambia password del cliente"""
-    db_client = get_client(db, client_id)
-    if not db_client:
+def change_password(db: Session, user_id: int, old_password: str, new_password: str) -> Optional[user]:
+    """Cambia password del usere"""
+    db_user = get_user(db, user_id)
+    if not db_user:
         return None
     
     # Verifica vecchia password
-    if not verify_password(old_password, db_client.password_hash):
+    if not verify_password(old_password, db_user.password_hash):
         return None
     
     # Aggiorna con nuova password
-    db_client.password_hash = hash_password(new_password)
+    db_user.password_hash = hash_password(new_password)
     db.commit()
-    db.refresh(db_client)
-    return db_client
+    db.refresh(db_user)
+    return db_user
 
 
 # ==================== ELIMINA ====================
 
-def delete_client(db: Session, client_id: int) -> bool:
-    """Elimina cliente (soft delete - imposta active=False)"""
-    db_client = get_client(db, client_id)
-    if not db_client:
+def delete_user(db: Session, user_id: int) -> bool:
+    """Elimina usere (soft delete - imposta active=False)"""
+    db_user = get_user(db, user_id)
+    if not db_user:
         return False
     
-    db_client.active = False
+    db_user.active = False
     db.commit()
     return True
 
 
 # ==================== AUTENTICAZIONE ====================
 
-def authenticate_client(db: Session, email: str, password: str) -> Optional[Client]:
-    """Autentica cliente con email e password"""
-    client = get_client_by_email(db, email)
-    if not client:
+def authenticate_user(db: Session, email: str, password: str) -> Optional[user]:
+    """Autentica usere con email e password"""
+    user = get_user_by_email(db, email)
+    if not user:
         return None
-    if not verify_password(password, client.password_hash):
+    if not verify_password(password, user.password_hash):
         return None
-    if not client.active:
+    if not user.active:
         return None
-    return client
+    return user

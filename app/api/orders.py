@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.db_connection import get_db
-from app.models.client import Client
+from app.models.user import user
 from app.models.product import Product
 from app.models.order import Order, OrderDetail
 from app.schemas.order import (
@@ -24,8 +24,8 @@ router = APIRouter(
     # tags=["orders"]
 )
 
-# Client ID fisso per testing
-TEMP_CLIENT_ID = 1
+# user ID fisso per testing
+TEMP_user_ID = 1
 
 
 def generate_order_number() -> str:
@@ -40,7 +40,7 @@ def create_order(
     db: Session = Depends(get_db)
 ):
     """
-    Crea un nuovo ordine per il cliente con ID=1
+    Crea un nuovo ordine per il usere con ID=1
     
     - Verifica disponibilità prodotti
     - Calcola prezzi
@@ -48,12 +48,12 @@ def create_order(
     - Aggiorna quantità disponibili
     """
     
-    # Verifica che il cliente esista
-    client = db.query(Client).filter(Client.id == TEMP_CLIENT_ID).first()
-    if not client:
+    # Verifica che il usere esista
+    user = db.query(user).filter(user.id == TEMP_user_ID).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Client with id {TEMP_CLIENT_ID} not found"
+            detail=f"user with id {TEMP_user_ID} not found"
         )
     
     # 1. Verifica che ci siano prodotti
@@ -110,7 +110,7 @@ def create_order(
     
     # 4. Crea ordine  
     new_order = Order(                  
-        client_id=TEMP_CLIENT_ID,
+        user_id=TEMP_user_ID,
         order_number=generate_order_number(),
         status="pending",
         subtotal=subtotal,
@@ -170,7 +170,7 @@ def create_order(
     return OrderResponse(
         id=order_with_details.id,
         order_number=order_with_details.order_number,
-        client_id=order_with_details.client_id,
+        user_id=order_with_details.user_id,
         status=order_with_details.status,
         total=order_with_details.total,
         subtotal=order_with_details.subtotal,
@@ -197,10 +197,10 @@ def create_order(
 @router.get("/", response_model=List[OrderListResponse])
 def get_all_orders(db: Session = Depends(get_db)):
     """
-    Recupera tutti gli ordini del cliente ID=1
+    Recupera tutti gli ordini del usere ID=1
     """
     orders = db.query(Order).filter(
-        Order.client_id == TEMP_CLIENT_ID
+        Order.user_id == TEMP_user_ID
     ).order_by(Order.created_at.desc()).all()
     
     response = []
@@ -250,7 +250,7 @@ def get_order_detail(order_id: int, db: Session = Depends(get_db)):
     return OrderResponse(
         id=order.id,
         order_number=order.order_number,
-        client_id=order.client_id,
+        user_id=order.user_id,
         status=order.status,
         total=order.total,
         subtotal=order.subtotal,
@@ -323,7 +323,7 @@ def update_order_status(
     return OrderResponse(
         id=order_with_details.id,
         order_number=order_with_details.order_number,
-        client_id=order_with_details.client_id,
+        user_id=order_with_details.user_id,
         status=order_with_details.status,
         total=order_with_details.total,
         subtotal=order_with_details.subtotal,

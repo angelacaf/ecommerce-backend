@@ -1,5 +1,5 @@
 """
-Client model - rappresenta un cliente nel database
+user model - rappresenta un usere nel database
 """
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
@@ -8,13 +8,13 @@ from sqlalchemy.orm import relationship
 from app.db_connection import Base
 
 
-class Client(Base):
+class user(Base):
     """
-    Modello Client per la tabella users nel database.
+    Modello user per la tabella users nel database.
     
     Attributi:
-        id: ID univoco del cliente
-        email: Email del cliente (unique)
+        id: ID univoco del usere
+        email: Email del usere (unique)
         password_hash: Password hashata
         first_name: Nome
         last_name: Cognome
@@ -51,4 +51,4 @@ class Client(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     
     # Relazioni
-    orders = relationship("Order", back_populates="client", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")

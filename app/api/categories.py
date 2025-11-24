@@ -15,4 +15,4 @@ async def get_category(category_id: int, db: Session = Depends(get_db)):
     category = crud_category.get_category_by_id(db, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    return category     
+    return category

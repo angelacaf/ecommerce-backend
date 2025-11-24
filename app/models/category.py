@@ -1,4 +1,4 @@
-#  SQLAlchemy model (struttura tabella database)
+# SQLAlchemy model (struttura tabella database)
 
 from sqlalchemy import Column, Integer, String, Text, Boolean
 from sqlalchemy.orm import relationship

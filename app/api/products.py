@@ -4,7 +4,7 @@ Products API Router
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.db_connection import get_db
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
 from app.crud import product as crud_product
 

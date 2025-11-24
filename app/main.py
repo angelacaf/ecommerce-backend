@@ -4,7 +4,7 @@ FastAPI E-commerce Backend
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import engine, Base
+from app.db_connection import engine, Base
 from app.api import products, clients, orders
 
 # Crea tabelle database

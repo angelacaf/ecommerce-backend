@@ -1,6 +1,8 @@
+#  SQLAlchemy model (struttura tabella database)
+
 from sqlalchemy import Column, Integer, String, Text, Boolean
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.db_connection import Base
 
 class Category(Base):
     __tablename__ = "categories"

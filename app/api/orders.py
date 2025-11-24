@@ -7,7 +7,7 @@ from typing import List
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from app.database import get_db
+from app.db_connection import get_db
 from app.models.client import Client
 from app.models.product import Product
 from app.models.order import Order, OrderDetail

@@ -143,3 +143,6 @@ INSERT INTO ecommerce.order_details (order_id, product_id, quantity, unit_price,
 (3, 1, 1, 29.99, 29.99),
 (3, 4, 1, 39.99, 39.99),
 (4, 4, 1, 39.99, 39.99);
+
+
+ALTER TABLE ecommerce.clients RENAME TO users;

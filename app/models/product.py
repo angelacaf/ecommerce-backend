@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy import CheckConstraint
 
-from app.database import Base
+from app.db_connection import Base
 
 
 class Product(Base):

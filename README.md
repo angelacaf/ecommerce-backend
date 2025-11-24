@@ -13,7 +13,7 @@ Per creare il db su postgreSQL
    - .env in fe   ->   VITE_BACKEND_URL=[your_backend_url_here/api]
       ad esempio       VITE_BACKEND_URL=http://localhost:8000/api
    - .env in be   ->   DATABASE_URL=postgresql://USERNAME:PASSWORD@HOST:PORT/DATABASE
-      ad esempio       DATABASE_URL=postgresql://postgres:root@localhost:5432/ecommerce 
+      ad esempio       DATABASE_URL=postgresql://postgres:root@localhost:5432/ecommerce_db
 
 # avvio be
 uvicorn app.main:app --reload

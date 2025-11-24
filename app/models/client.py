@@ -10,7 +10,7 @@ from app.db_connection import Base
 
 class Client(Base):
     """
-    Modello Client per la tabella clients nel database.
+    Modello Client per la tabella users nel database.
     
     Attributi:
         id: ID univoco del cliente
@@ -29,7 +29,7 @@ class Client(Base):
         created_at: Data di registrazione
         updated_at: Data ultimo aggiornamento
     """
-    __tablename__ = "clients"
+    __tablename__ = "users"
     __table_args__ = {'schema': 'ecommerce'}
 
     id = Column(Integer, primary_key=True, index=True)

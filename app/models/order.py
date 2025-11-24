@@ -41,7 +41,7 @@ class Order(Base):
     __tablename__ = "orders"
     
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("ecommerce.clients.id", ondelete="CASCADE"), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey("ecommerce.users.id", ondelete="CASCADE"), nullable=False, index=True)
     order_number = Column(String(50), nullable=False, unique=True, index=True)
     status = Column(
         String(50), 

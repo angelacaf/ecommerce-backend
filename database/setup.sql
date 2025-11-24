@@ -22,7 +22,7 @@ CREATE INDEX idx_categories_name ON ecommerce.categories(name);
 CREATE INDEX idx_categories_active ON ecommerce.categories(active);
 
 -- Tabelle principali
-CREATE TABLE ecommerce.clients (
+CREATE TABLE ecommerce.users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -40,8 +40,8 @@ CREATE TABLE ecommerce.clients (
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_clients_active ON ecommerce.clients(active);
-CREATE INDEX idx_clients_email ON ecommerce.clients(email);
+CREATE INDEX idx_users_active ON ecommerce.users(active);
+CREATE INDEX idx_users_email ON ecommerce.users(email);
 
 CREATE TABLE ecommerce.products (
     id SERIAL PRIMARY KEY,
@@ -65,7 +65,7 @@ CREATE INDEX idx_products_category_id ON ecommerce.products(category_id);
 
 CREATE TABLE ecommerce.orders (
     id SERIAL PRIMARY KEY,
-    client_id INTEGER NOT NULL REFERENCES ecommerce.clients(id) ON DELETE CASCADE,
+    client_id INTEGER NOT NULL REFERENCES ecommerce.users(id) ON DELETE CASCADE,
     order_number VARCHAR(50) NOT NULL UNIQUE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending','paid','processing','shipped','delivered','cancelled','refunded')),
@@ -118,7 +118,7 @@ INSERT INTO ecommerce.categories (name, description, active) VALUES
 ('Black Friday', 'Super sconti e offerte speciali Black Friday', TRUE),
 ('Natale', 'Decorazioni natalizie, regali e articoli per le feste', TRUE);
 
-INSERT INTO ecommerce.clients (email, password_hash, first_name, last_name, phone, address, city, postal_code, country, active, email_verified, created_at, updated_at) VALUES
+INSERT INTO ecommerce.users (email, password_hash, first_name, last_name, phone, address, city, postal_code, country, active, email_verified, created_at, updated_at) VALUES
 ('mario.rossi@email.com', '$2b$12$hash1', 'Mario', 'Rossi', '+39 333 1234567', 'Via Roma 1', 'Rome', '00100', 'Italy', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('luigi.verdi@email.com', '$2b$12$hash2', 'Luigi', 'Verdi', '+39 333 9876543', 'Via Milano 5', 'Milan', '20100', 'Italy', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('anna.bianchi@email.com', '$2b$12$hash3', 'Anna', 'Bianchi', '+39 333 5556677', 'Via Napoli 10', 'Naples', '80100', 'Italy', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
@@ -145,4 +145,4 @@ INSERT INTO ecommerce.order_details (order_id, product_id, quantity, unit_price,
 (4, 4, 1, 39.99, 39.99);
 
 
-ALTER TABLE ecommerce.clients RENAME TO users;
+ALTER TABLE ecommerce.users RENAME TO users;

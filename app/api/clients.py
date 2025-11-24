@@ -1,5 +1,5 @@
 """
-Clients API Router
+users API Router
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -14,13 +14,13 @@ from app.schemas.client import (
 )
 from app.crud import client as crud_client
 
-# Crea router per clients
+# Crea router per users
 router = APIRouter()
 
 
 # ==================== REGISTRAZIONE & LOGIN ====================
 
-@router.post("/clients/register", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/users/register", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
 def register_client(client: ClientCreate, db: Session = Depends(get_db)):
     """
     Registra un nuovo cliente
@@ -40,7 +40,7 @@ def register_client(client: ClientCreate, db: Session = Depends(get_db)):
     return crud_client.create_client(db, client)
 
 
-@router.post("/clients/login", response_model=ClientResponse)
+@router.post("/users/login", response_model=ClientResponse)
 def login_client(credentials: ClientLogin, db: Session = Depends(get_db)):
     """
     Login cliente
@@ -58,10 +58,10 @@ def login_client(credentials: ClientLogin, db: Session = Depends(get_db)):
     return client
 
 
-# ==================== CRUD CLIENTS ====================
+# ==================== CRUD users ====================
 
-@router.get("/clients", response_model=list[ClientResponse])
-def list_clients(skip: int = 0, limit: int = 20, active_only: bool = True, db: Session = Depends(get_db)):
+@router.get("/users", response_model=list[ClientResponse])
+def list_users(skip: int = 0, limit: int = 20, active_only: bool = True, db: Session = Depends(get_db)):
     """
     Lista clienti
     
@@ -69,10 +69,10 @@ def list_clients(skip: int = 0, limit: int = 20, active_only: bool = True, db: S
     - limit: numero massimo di record da restituire
     - active_only: se True, restituisce solo clienti attivi
     """
-    return crud_client.get_clients(db, skip, limit, active_only)
+    return crud_client.get_users(db, skip, limit, active_only)
 
 
-@router.get("/clients/{client_id}", response_model=ClientResponse)
+@router.get("/users/{client_id}", response_model=ClientResponse)
 def get_client(client_id: int, db: Session = Depends(get_db)):
     """Dettaglio cliente"""
     client = crud_client.get_client(db, client_id)
@@ -84,7 +84,7 @@ def get_client(client_id: int, db: Session = Depends(get_db)):
     return client
 
 
-@router.get("/clients/email/{email}", response_model=ClientResponse)
+@router.get("/users/email/{email}", response_model=ClientResponse)
 def get_client_by_email(email: str, db: Session = Depends(get_db)):
     """Ottieni cliente per email"""
     client = crud_client.get_client_by_email(db, email)
@@ -96,7 +96,7 @@ def get_client_by_email(email: str, db: Session = Depends(get_db)):
     return client
 
 
-@router.put("/clients/{client_id}", response_model=ClientResponse)
+@router.put("/users/{client_id}", response_model=ClientResponse)
 def update_client(client_id: int, client_update: ClientUpdate, db: Session = Depends(get_db)):
     """
     Aggiorna cliente
@@ -113,7 +113,7 @@ def update_client(client_id: int, client_update: ClientUpdate, db: Session = Dep
     return client
 
 
-@router.post("/clients/{client_id}/change-password", response_model=ClientResponse)
+@router.post("/users/{client_id}/change-password", response_model=ClientResponse)
 def change_password(client_id: int, password_data: ClientChangePassword, db: Session = Depends(get_db)):
     """
     Cambia password del cliente
@@ -135,7 +135,7 @@ def change_password(client_id: int, password_data: ClientChangePassword, db: Ses
     return client
 
 
-@router.delete("/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_client(client_id: int, db: Session = Depends(get_db)):
     """
     Elimina cliente (soft delete)

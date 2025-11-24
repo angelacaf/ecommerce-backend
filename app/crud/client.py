@@ -38,7 +38,7 @@ def get_client_by_email(db: Session, email: str) -> Optional[Client]:
     return db.query(Client).filter(Client.email == email).first()
 
 
-def get_clients(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[Client]:
+def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[Client]:
     """Ottieni lista clienti"""
     query = db.query(Client)
     if active_only:

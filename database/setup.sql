@@ -145,4 +145,4 @@ INSERT INTO ecommerce.order_details (order_id, product_id, quantity, unit_price,
 (4, 4, 1, 39.99, 39.99);
 
 
-ALTER TABLE ecommerce.users RENAME TO users;
+ALTER TABLE ecommerce.clients RENAME TO users;

@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from app.db_connection import Base
 
 
-class user(Base):
+class User(Base):
     """
     Modello user per la tabella users nel database.
     

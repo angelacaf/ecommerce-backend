@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.db_connection import get_db
-from app.models.user import user
+from app.models.user import User
 from app.models.product import Product
 from app.models.order import Order, OrderDetail
 from app.schemas.order import (
@@ -49,7 +49,7 @@ def create_order(
     """
     
     # Verifica che il usere esista
-    user = db.query(user).filter(user.id == TEMP_user_ID).first()
+    user = db.query(User).filter(User.id == TEMP_user_ID).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 import bcrypt
 
-from app.models.user import user
+from app.models.user import User
 from app.schemas.user import userCreate, userUpdate
 
 
@@ -28,27 +28,27 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # ==================== LEGGI ====================
 
-def get_user(db: Session, user_id: int) -> Optional[user]:
+def get_user(db: Session, user_id: int) -> Optional[User]:
     """Ottieni un usere per ID"""
-    return db.query(user).filter(user.id == user_id).first()
+    return db.query(User).filter(User.id == user_id).first()
 
 
-def get_user_by_email(db: Session, email: str) -> Optional[user]:
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """Ottieni un usere per email"""
-    return db.query(user).filter(user.email == email).first()
+    return db.query(User).filter(User.email == email).first()
 
 
-def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[user]:
+def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[User]:
     """Ottieni lista useri"""
-    query = db.query(user)
+    query = db.query(User)
     if active_only:
-        query = query.filter(user.active == True)
+        query = query.filter(User.active == True)
     return query.offset(skip).limit(limit).all()
 
 
 # ==================== CREA ====================
 
-def create_user(db: Session, user: userCreate) -> user:
+def create_user(db: Session, user: userCreate) -> User:
     """Registra nuovo usere"""
     # Hash password
     hashed_password = hash_password(user.password)
@@ -65,7 +65,7 @@ def create_user(db: Session, user: userCreate) -> user:
 
 # ==================== AGGIORNA ====================
 
-def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[user]:
+def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[User]:
     """Aggiorna usere"""
     db_user = get_user(db, user_id)
     if not db_user:
@@ -81,7 +81,7 @@ def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[
     return db_user
 
 
-def change_password(db: Session, user_id: int, old_password: str, new_password: str) -> Optional[user]:
+def change_password(db: Session, user_id: int, old_password: str, new_password: str) -> Optional[User]:
     """Cambia password del usere"""
     db_user = get_user(db, user_id)
     if not db_user:
@@ -113,7 +113,7 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 # ==================== AUTENTICAZIONE ====================
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[user]:
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Autentica usere con email e password"""
     user = get_user_by_email(db, email)
     if not user:

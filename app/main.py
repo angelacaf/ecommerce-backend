@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db_connection import engine, Base
-from app.api import products, users, orders
+from app.api import products, users, orders, categories 
 
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
@@ -20,7 +20,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,6 +65,10 @@ def home():
                 "get": "GET /api/orders/{id}",
                 "update_status": "PATCH /api/orders/{id}/status",
                 "cancel": "DELETE /api/orders/{id}"
+            },
+            "categories": {  
+                "list": "GET /api/categories",
+                "get": "GET /api/categories/{id}"
             }
         },
         "status": "running"
@@ -80,7 +84,8 @@ def health_check():
     """
     return {
         "status": "healthy",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "database": "connected"
     }
 
 
@@ -89,15 +94,23 @@ def health_check():
 # Products endpoints
 app.include_router(products.router, prefix="/api", tags=["Products"])
 
-# users endpoints
+# Users endpoints
 app.include_router(users.router, prefix="/api", tags=["Users"])
 
 # Orders endpoints
 app.include_router(orders.router, prefix="/api", tags=["Orders"])
+
+# Categories endpoints  
+app.include_router(categories.router, prefix="/api", tags=["Categories"])
 
 
 # ==================== AVVIO ====================
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000,
+        reload=True  
+    )

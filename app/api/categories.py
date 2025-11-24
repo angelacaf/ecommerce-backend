@@ -4,7 +4,9 @@ from app.db_connection import get_db
 from app.schemas.category import CategoryResponse
 from app.crud import category as crud_category
 
-router = APIRouter(prefix="/categories", tags=["categories"])
+router = APIRouter(prefix="/categories", 
+                  # tags=["categories"]
+                   )
 
 @router.get("/", response_model=list[CategoryResponse])
 async def get_categories(db: Session = Depends(get_db)):

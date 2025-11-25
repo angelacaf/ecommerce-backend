@@ -1,26 +1,24 @@
-"""
-FastAPI E-commerce Backend
-"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db_connection import engine, Base
-from app.api import products, users, orders, categories  
+from app.api import products, users, orders, categories
+from app.config import APP_NAME, APP_VERSION, ALLOWED_ORIGINS
 
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
 
 # Inizializza FastAPI
 app = FastAPI(
-    title="E-commerce API",
+    title=APP_NAME,
     description="Backend REST API per e-commerce",
-    version="1.0.0"
+    version=APP_VERSION
 )
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

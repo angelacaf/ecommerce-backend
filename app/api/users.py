@@ -21,7 +21,6 @@ from app.models.user import User
 
 router = APIRouter()
 
-
 # ==================== REGISTRAZIONE & LOGIN ====================
 
 @router.post("/users/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -41,7 +40,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={
-            "sub": new_user.id,
+            "sub": str(new_user.id),  # ✅ Converti in stringa
             "email": new_user.email,
             "role": new_user.role
         },
@@ -81,7 +80,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={
-            "sub": user.id,
+            "sub": str(user.id),  # ✅ Converti in stringa
             "email": user.email,
             "role": user.role
         },

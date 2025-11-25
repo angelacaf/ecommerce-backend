@@ -53,7 +53,7 @@ class User(Base):
     country = Column(String(100), default="Italy", nullable=True)
         
     role = Column(
-        String(20),  # ✅ USA QUESTA
+        String(20),  
         nullable=False,
         default="customer",
         index=True

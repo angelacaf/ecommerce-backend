@@ -28,11 +28,19 @@ def get_current_user(
             detail="Token non valido o scaduto"
         )
     
-    user_id = payload.get("user_id")
+    user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token non valido"
+        )
+    
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User ID non valido nel token"
         )
     
     user = db.query(User).filter(User.id == user_id).first()

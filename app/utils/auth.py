@@ -6,10 +6,7 @@ from typing import Optional
 from jose import JWTError, jwt
 import bcrypt  
 
-
-SECRET_KEY = "a7f3b9c2e8d4f1a6b9c3e7f2d8a4c1b6e9f3a7d2c8b4f1e6a9c3d7f2b8e4a1c6"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

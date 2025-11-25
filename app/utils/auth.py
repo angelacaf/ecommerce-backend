@@ -25,7 +25,16 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Crea JWT token"""
+    """
+    Crea JWT token
+    
+    Args:
+        data: Dizionario con i dati da inserire nel token (es. {"sub": "7", "email": "...", "role": "..."})
+        expires_delta: Durata personalizzata del token (opzionale)
+    
+    Returns:
+        Token JWT firmato come stringa
+    """
     to_encode = data.copy()
     
     if expires_delta:
@@ -40,7 +49,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def decode_access_token(token: str) -> Optional[dict]:
-    """Decodifica JWT token"""
+    """
+    Decodifica JWT token
+    
+    Args:
+        token: Token JWT da decodificare
+    
+    Returns:
+        Payload del token come dict, oppure None se invalido/scaduto
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload

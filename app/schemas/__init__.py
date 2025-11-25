@@ -1,25 +1,28 @@
 """
 Pydantic Schemas per validazione
+Esporta solo gli schemi effettivamente utilizzati nei router
 """
+
+# Products
 from app.schemas.product import (
-    ProductBase,
     ProductCreate,
     ProductUpdate,
     ProductResponse
 )
+
+# Users
 from app.schemas.user import (  
-    UserBase,          
-    UserCreate,
-    UserUpdate,
-    UserResponse,
-    UserLogin,
-    UserChangePassword,
-    Token,              
-    TokenData
+    UserRole,           # Per dependencies.py
+    UserCreate,         # Per register
+    UserUpdate,         # Per update profile
+    User,               # Per /users/me e admin endpoints
+    UserPublic,         # Dentro TokenWithUser
+    UserLogin,          # Per login
+    UserChangePassword, # Per change password
+    TokenWithUser       # Per login/register response
 )
 
-
-
+# Orders
 from app.schemas.order import (
     OrderItemCreate,
     OrderItemResponse,
@@ -30,18 +33,22 @@ from app.schemas.order import (
 )
 
 __all__ = [
-    "ProductBase",
+    # Products
     "ProductCreate",
     "ProductUpdate",
     "ProductResponse",
-    "UserBase",         
+    
+    # Users
+    "UserRole",
     "UserCreate",
     "UserUpdate",
-    "UserResponse",
+    "User",
+    "UserPublic",
     "UserLogin",
     "UserChangePassword",
-    "Token",            
-    "TokenData",        
+    "TokenWithUser",
+    
+    # Orders
     "OrderItemCreate",
     "OrderItemResponse",
     "OrderCreate",

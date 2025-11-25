@@ -1,29 +1,37 @@
 """
-user model - rappresenta un usere nel database
+User model - rappresenta un utente nel database
 """
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Enum
 from sqlalchemy.orm import relationship
+import enum
 
 from app.db_connection import Base
 
 
+class UserRole(str, enum.Enum):
+    """Ruoli utente"""
+    ADMIN = "admin"
+    CUSTOMER = "customer"
+
+
 class User(Base):
     """
-    Modello user per la tabella users nel database.
+    Modello User per la tabella users nel database.
     
     Attributi:
-        id: ID univoco del usere
-        email: Email del usere (unique)
+        id: ID univoco dell'utente
+        email: Email dell'utente (unique)
         password_hash: Password hashata
         first_name: Nome
         last_name: Cognome
         phone: Numero di telefono
         address: Indirizzo
-        city: Citta
+        city: Città
         postal_code: CAP
         state: Provincia/Stato
         country: Nazione (default: Italy)
+        role: Ruolo utente (admin, customer)
         active: Se l'account è attivo
         email_verified: Se l'email è verificata
         created_at: Data di registrazione
@@ -43,6 +51,13 @@ class User(Base):
     postal_code = Column(String(10), nullable=True)
     state = Column(String(50), nullable=True)
     country = Column(String(100), default="Italy", nullable=True)
+        
+    role = Column(
+        String(20),  # ✅ USA QUESTA
+        nullable=False,
+        default="customer",
+        index=True
+    )
     active = Column(Boolean, default=True, nullable=False, index=True) 
     email_verified = Column(Boolean, default=False, nullable=False)
     

@@ -1,45 +1,28 @@
 """
-CRUD operations per user
+CRUD operations per User
 """
 from typing import Optional
 from sqlalchemy.orm import Session
-import bcrypt
 
 from app.models.user import User
-from app.schemas.user import userCreate, userUpdate
-
-
-# ==================== UTILITY ====================
-
-def hash_password(password: str) -> str:
-    """Hash della password usando bcrypt direttamente"""
-    password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode('utf-8')
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica password usando bcrypt direttamente"""
-    password_bytes = plain_password.encode('utf-8')
-    hashed_bytes = hashed_password.encode('utf-8')
-    return bcrypt.checkpw(password_bytes, hashed_bytes)
+from app.schemas.user import UserCreate, UserUpdate
+from app.utils.auth import get_password_hash, verify_password
 
 
 # ==================== LEGGI ====================
 
 def get_user(db: Session, user_id: int) -> Optional[User]:
-    """Ottieni un usere per ID"""
+    """Ottieni un utente per ID"""
     return db.query(User).filter(User.id == user_id).first()
 
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    """Ottieni un usere per email"""
+    """Ottieni un utente per email"""
     return db.query(User).filter(User.email == email).first()
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = True) -> list[User]:
-    """Ottieni lista useri"""
+    """Ottieni lista utenti"""
     query = db.query(User)
     if active_only:
         query = query.filter(User.active == True)
@@ -48,14 +31,14 @@ def get_users(db: Session, skip: int = 0, limit: int = 100, active_only: bool = 
 
 # ==================== CREA ====================
 
-def create_user(db: Session, user: userCreate) -> User:
-    """Registra nuovo usere"""
-    # Hash password
-    hashed_password = hash_password(user.password)
+def create_user(db: Session, user: UserCreate) -> User:
+    """Registra nuovo utente"""
+    # Hash password usando auth.py
+    hashed_password = get_password_hash(user.password)
     
-    # Crea user senza il campo password
+    # Crea User senza il campo password
     user_data = user.model_dump(exclude={'password'})
-    db_user = user(**user_data, password_hash=hashed_password)
+    db_user = User(**user_data, password_hash=hashed_password)
     
     db.add(db_user)
     db.commit()
@@ -65,8 +48,8 @@ def create_user(db: Session, user: userCreate) -> User:
 
 # ==================== AGGIORNA ====================
 
-def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[User]:
-    """Aggiorna usere"""
+def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[User]:
+    """Aggiorna utente"""
     db_user = get_user(db, user_id)
     if not db_user:
         return None
@@ -82,7 +65,7 @@ def update_user(db: Session, user_id: int, user_update: userUpdate) -> Optional[
 
 
 def change_password(db: Session, user_id: int, old_password: str, new_password: str) -> Optional[User]:
-    """Cambia password del usere"""
+    """Cambia password dell'utente"""
     db_user = get_user(db, user_id)
     if not db_user:
         return None
@@ -92,7 +75,7 @@ def change_password(db: Session, user_id: int, old_password: str, new_password: 
         return None
     
     # Aggiorna con nuova password
-    db_user.password_hash = hash_password(new_password)
+    db_user.password_hash = get_password_hash(new_password)
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -101,7 +84,7 @@ def change_password(db: Session, user_id: int, old_password: str, new_password: 
 # ==================== ELIMINA ====================
 
 def delete_user(db: Session, user_id: int) -> bool:
-    """Elimina usere (soft delete - imposta active=False)"""
+    """Elimina utente (soft delete - imposta active=False)"""
     db_user = get_user(db, user_id)
     if not db_user:
         return False
@@ -114,7 +97,7 @@ def delete_user(db: Session, user_id: int) -> bool:
 # ==================== AUTENTICAZIONE ====================
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    """Autentica usere con email e password"""
+    """Autentica utente con email e password"""
     user = get_user_by_email(db, email)
     if not user:
         return None

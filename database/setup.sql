@@ -145,4 +145,19 @@ INSERT INTO ecommerce.order_details (order_id, product_id, quantity, unit_price,
 (4, 4, 1, 39.99, 39.99);
 
 
---ALTER TABLE ecommerce.clients RENAME TO users;
+
+
+-- Aggiungi colonna role
+ALTER TABLE ecommerce.users 
+ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'customer';
+
+-- Check constraint
+ALTER TABLE ecommerce.users
+ADD CONSTRAINT users_role_check 
+CHECK (role IN ('admin', 'customer'));
+
+--  Indice
+CREATE INDEX idx_users_role ON ecommerce.users(role);
+
+-- Imposta primo utente come admin
+UPDATE ecommerce.users SET role = 'admin' WHERE id = 1;

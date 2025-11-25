@@ -94,7 +94,7 @@ class Order(Base):
     )
     
     # Relazioni
-    user = relationship("user", back_populates="orders")
+    user = relationship("User", back_populates="orders")
     order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")
 
 

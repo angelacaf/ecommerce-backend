@@ -20,8 +20,8 @@ from app.schemas.order import (
 )
 
 router = APIRouter(
-    prefix="/orders"
-    # , tags=["orders"]
+    prefix="/orders",
+    # tags=["orders"]
 )
 
 # user ID fisso per testing
@@ -48,7 +48,7 @@ def create_order(
     - Aggiorna quantità disponibili
     """
     
-    # Verifica che il usere esista
+    # Verifica che user esiste
     user = db.query(User).filter(User.id == TEMP_user_ID).first()
     if not user:
         raise HTTPException(
@@ -197,7 +197,7 @@ def create_order(
 @router.get("/", response_model=List[OrderListResponse])
 def get_all_orders(db: Session = Depends(get_db)):
     """
-    Recupera tutti gli ordini del usere ID=1
+    Recupera tutti gli ordini di user ID=1
     """
     orders = db.query(Order).filter(
         Order.user_id == TEMP_user_ID

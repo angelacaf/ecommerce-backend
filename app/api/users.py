@@ -1,35 +1,32 @@
 """
-users API Router
+Users API Router con JWT
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import timedelta
 
 from app.db_connection import get_db
 from app.schemas.user import (
-    userCreate, 
-    userUpdate, 
-    userResponse, 
-    userLogin,
-    userChangePassword
+    UserCreate,  
+    UserUpdate,
+    UserResponse,
+    UserLogin,
+    UserChangePassword,
+    Token  
 )
 from app.crud import user as crud_user
+from app.utils.auth import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES  
+from app.utils.dependencies import get_current_user, require_admin  
+from app.models.user import User
 
-# Crea router per users
 router = APIRouter()
 
 
 # ==================== REGISTRAZIONE & LOGIN ====================
 
-@router.post("/users/register", response_model=userResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user: userCreate, db: Session = Depends(get_db)):
-    """
-    Registra un nuovo usere
-    
-    - Verifica che l'email non sia già registrata
-    - Hash della password
-    - Crea il nuovo usere
-    """
-    # Verifica se email già esiste
+@router.post("/users/register", response_model=Token, status_code=status.HTTP_201_CREATED)
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    """Registra nuovo utente e restituisce token JWT"""
     existing_user = crud_user.get_user_by_email(db, user.email)
     if existing_user:
         raise HTTPException(
@@ -37,113 +34,167 @@ def register_user(user: userCreate, db: Session = Depends(get_db)):
             detail="Email già registrata"
         )
     
-    return crud_user.create_user(db, user)
-
-
-@router.post("/users/login", response_model=userResponse)
-def login_user(credentials: userLogin, db: Session = Depends(get_db)):
-    """
-    Login usere
+    # Crea utente
+    new_user = crud_user.create_user(db, user)
     
-    - Verifica email e password
-    - Restituisce i dati del usere (in produzione restituirebbe un JWT token)
-    """
-    user = crud_user.authenticate_user(db, credentials.email, credentials.password)
+    # Crea token JWT
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "sub": new_user.id,
+            "email": new_user.email,
+            "role": new_user.role
+        },
+        expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(new_user)
+    )
+
+
+@router.post("/users/login", response_model=Token)
+def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
+    """Login utente e restituisce token JWT"""
+    user = crud_user.get_user_by_email(db, credentials.email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o password non corretti"
         )
     
-    return user
-
-
-# ==================== CRUD users ====================
-
-@router.get("/users", response_model=list[userResponse])
-def list_users(skip: int = 0, limit: int = 20, active_only: bool = True, db: Session = Depends(get_db)):
-    """
-    Lista useri
+    if not verify_password(credentials.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email o password non corretti"
+        )
     
-    - skip: numero di record da saltare (per paginazione)
-    - limit: numero massimo di record da restituire
-    - active_only: se True, restituisce solo useri attivi
-    """
-    return crud_user.get_users(db, skip, limit, active_only)
+    if not user.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account disattivato"
+        )
+    
+    # Crea token JWT
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "sub": user.id,
+            "email": user.email,
+            "role": user.role
+        },
+        expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user)
+    )
 
 
-@router.get("/users/{user_id}", response_model=userResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    """Dettaglio usere"""
-    user = crud_user.get_user(db, user_id)
-    if not user:
+# ==================== PROFILO UTENTE ====================
+
+@router.get("/users/me", response_model=UserResponse)
+def get_my_profile(current_user: User = Depends(get_current_user)):  
+    """Ottieni profilo utente autenticato"""
+    return current_user
+
+
+@router.put("/users/me", response_model=UserResponse)
+def update_my_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Aggiorna profilo utente autenticato"""
+    updated_user = crud_user.update_user(db, current_user.id, user_update)
+    if not updated_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="usere non trovato"
+            detail="Utente non trovato"
         )
-    return user
+    return updated_user
 
 
-@router.get("/users/email/{email}", response_model=userResponse)
-def get_user_by_email(email: str, db: Session = Depends(get_db)):
-    """Ottieni usere per email"""
-    user = crud_user.get_user_by_email(db, email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="usere non trovato"
-        )
-    return user
-
-
-@router.put("/users/{user_id}", response_model=userResponse)
-def update_user(user_id: int, user_update: userUpdate, db: Session = Depends(get_db)):
-    """
-    Aggiorna usere
-    
-    - Aggiorna solo i campi forniti
-    - Non può modificare la password (usa l'endpoint dedicato)
-    """
-    user = crud_user.update_user(db, user_id, user_update)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="usere non trovato"
-        )
-    return user
-
-
-@router.post("/users/{user_id}/change-password", response_model=userResponse)
-def change_password(user_id: int, password_data: userChangePassword, db: Session = Depends(get_db)):
-    """
-    Cambia password del usere
-    
-    - Verifica la vecchia password
-    - Imposta la nuova password
-    """
+@router.post("/users/me/change-password", response_model=UserResponse)
+def change_my_password(
+    password_data: UserChangePassword,
+    current_user: User = Depends(get_current_user),  
+    db: Session = Depends(get_db)
+):
+    """Cambia password utente autenticato"""
     user = crud_user.change_password(
-        db, 
-        user_id, 
-        password_data.old_password, 
+        db,
+        current_user.id,
+        password_data.old_password,
         password_data.new_password
     )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="usere non trovato o password non corretta"
+            detail="Password attuale non corretta"
+        )
+    return user
+
+
+# ==================== ADMIN ENDPOINTS ====================
+
+@router.get("/users", response_model=list[UserResponse])
+def list_users(
+    skip: int = 0,
+    limit: int = 20,
+    active_only: bool = True,
+    current_user: User = Depends(require_admin), 
+    db: Session = Depends(get_db)
+):
+    """Lista utenti (SOLO ADMIN)"""
+    return crud_user.get_users(db, skip, limit, active_only)
+
+
+@router.get("/users/email/{email}", response_model=UserResponse)
+def get_user_by_email(
+    email: str,
+    current_user: User = Depends(require_admin),  
+    db: Session = Depends(get_db)
+):
+    """Ottieni utente per email (SOLO ADMIN)"""
+    user = crud_user.get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utente non trovato"
+        )
+    return user
+
+
+@router.get("/users/{user_id}", response_model=UserResponse)
+def get_user(
+    user_id: int,
+    current_user: User = Depends(require_admin), 
+    db: Session = Depends(get_db)
+):
+    """Dettaglio utente (SOLO ADMIN)"""
+    user = crud_user.get_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utente non trovato"
         )
     return user
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """
-    Elimina usere (soft delete)
-    
-    - Imposta active=False invece di eliminare il record
-    """
+def delete_user(
+    user_id: int,
+    current_user: User = Depends(require_admin),  
+    db: Session = Depends(get_db)
+):
+    """Elimina utente (SOLO ADMIN)"""
     if not crud_user.delete_user(db, user_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="usere non trovato"
+            detail="Utente non trovato"
         )

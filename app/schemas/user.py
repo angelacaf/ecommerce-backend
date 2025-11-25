@@ -1,13 +1,20 @@
 """
-user Schemas - Validazione dati per user
+User Schemas - Validazione dati per User
 """
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from enum import Enum
 
 
-class userBase(BaseModel):
-    """Campi base del usere"""
+class UserRole(str, Enum):
+    """Ruoli utente"""
+    ADMIN = "admin"
+    CUSTOMER = "customer"
+
+
+class UserBase(BaseModel):
+    """Campi base dell'utente"""
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
@@ -19,13 +26,14 @@ class userBase(BaseModel):
     country: str = Field(default="Italy", max_length=100)
 
 
-class userCreate(userBase):
-    """Per registrare un nuovo usere"""
+class UserCreate(UserBase):
+    """Per registrare un nuovo utente"""
     password: str = Field(..., min_length=6, max_length=100)
+    role: UserRole = Field(default="customer")  
 
 
-class userUpdate(BaseModel):
-    """Per aggiornare un usere (tutti i campi opzionali)"""
+class UserUpdate(BaseModel):
+    """Per aggiornare un utente (tutti i campi opzionali)"""
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -39,15 +47,16 @@ class userUpdate(BaseModel):
     email_verified: Optional[bool] = None
 
 
-class userChangePassword(BaseModel):
+class UserChangePassword(BaseModel):
     """Per cambiare password"""
     old_password: str = Field(..., min_length=6, max_length=100)
     new_password: str = Field(..., min_length=6, max_length=100)
 
 
-class userResponse(userBase):
+class UserResponse(UserBase):
     """Risposta API - include campi dal database (NO password_hash)"""
     id: int
+    role: UserRole 
     active: bool
     email_verified: bool
     created_at: datetime
@@ -56,7 +65,20 @@ class userResponse(userBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class userLogin(BaseModel):
+class UserLogin(BaseModel):
     """Per login"""
     email: EmailStr
     password: str
+
+class Token(BaseModel):
+    """Risposta token JWT"""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class TokenData(BaseModel):
+    """Dati contenuti nel token"""
+    user_id: Optional[int] = None
+    email: Optional[str] = None
+    role: Optional[UserRole] = None

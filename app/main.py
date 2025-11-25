@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db_connection import engine, Base
-from app.api import products, users, orders, categories 
+from app.api import products, users, orders, categories  
 
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
@@ -54,18 +54,19 @@ def home():
             "users": {
                 "register": "POST /api/users/register",
                 "login": "POST /api/users/login",
-                "list": "GET /api/users",
-                "get": "GET /api/users/{id}",
-                "get_by_email": "GET /api/users/email/{email}",
-                "update": "PUT /api/users/{id}",
-                "change_password": "POST /api/users/{id}/change-password",
-                "delete": "DELETE /api/users/{id}"
+                "profile": "GET /api/users/me",  
+                "update_profile": "PUT /api/users/me",  
+                "change_my_password": "POST /api/users/me/change-password",  
+                "list": "GET /api/users (admin)",
+                "get": "GET /api/users/{id} (admin)",
+                "get_by_email": "GET /api/users/email/{email} (admin)",
+                "delete": "DELETE /api/users/{id} (admin)"
             },
             "orders": {
                 "create": "POST /api/orders",
                 "list": "GET /api/orders",
                 "get": "GET /api/orders/{id}",
-                "update_status": "PATCH /api/orders/{id}/status",
+                "update_status": "PATCH /api/orders/{id}/status (admin)",
                 "cancel": "DELETE /api/orders/{id}"
             },
             "categories": {  

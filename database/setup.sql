@@ -1,9 +1,9 @@
 -- Crea il database ed entra
-CREATE DATABASE ecommerce_db
+CREATE DATABASE ecommerce_main
     WITH OWNER = postgres
     ENCODING = 'UTF8';
 
-\c ecommerce_db
+\c ecommerce_main
 
 -- Crea uno schema dedicato
 CREATE SCHEMA ecommerce;

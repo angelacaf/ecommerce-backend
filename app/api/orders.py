@@ -18,14 +18,14 @@ from app.schemas.order import (
     OrderItemResponse,
     OrderStatusUpdate
 )
+from app.utils.dependencies import get_current_user, require_admin  
 
 router = APIRouter(
     prefix="/orders",
-    # tags=["orders"]
+   # tags=["Orders"]
 )
 
-# user ID fisso per testing
-TEMP_user_ID = 1
+# TEMP_user_ID = 1
 
 
 def generate_order_number() -> str:
@@ -37,10 +37,11 @@ def generate_order_number() -> str:
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(
     order_data: OrderCreate,
+    current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
     """
-    Crea un nuovo ordine per il usere con ID=1
+    Crea un nuovo ordine per l'utente autenticato
     
     - Verifica disponibilità prodotti
     - Calcola prezzi
@@ -48,13 +49,13 @@ def create_order(
     - Aggiorna quantità disponibili
     """
     
-    # Verifica che user esiste
-    user = db.query(User).filter(User.id == TEMP_user_ID).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"user with id {TEMP_user_ID} not found"
-        )
+    # #Verifica che user esiste
+    # user = db.query(User).filter(User.id == TEMP_user_ID).first()
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_404_NOT_FOUND,
+    #         detail=f"user with id {TEMP_user_ID} not found"
+    #     )
     
     # 1. Verifica che ci siano prodotti
     if not order_data.items:
@@ -108,9 +109,9 @@ def create_order(
     
     total = subtotal + shipping_cost + tax - discount
     
-    # 4. Crea ordine  
-    new_order = Order(                  
-        user_id=TEMP_user_ID,
+    # 4. Crea ordine
+    new_order = Order(
+        user_id=current_user.id,  
         order_number=generate_order_number(),
         status="pending",
         subtotal=subtotal,
@@ -126,12 +127,11 @@ def create_order(
         shipping_country=order_data.shipping_country,
         notes=order_data.notes,
         paid=False
-    ) # Crea oggetto in memoria
+    )
     
-    db.add(new_order)   # Aggiungi alla sessione
-    db.flush()          # Invia al DB per generare l'ID
+    db.add(new_order)
+    db.flush()
     
-
     # 5. Crea dettagli ordine e aggiorna quantità
     for item_data in order_items:
         order_detail = OrderDetail(
@@ -146,10 +146,10 @@ def create_order(
         # Aggiorna quantità disponibile prodotto
         item_data["product"].available_quantity -= item_data["quantity"]
     
-    db.commit()                 # Salva tutto definitivamente
-    db.refresh(new_order)       # Ricarica
+    db.commit()
+    db.refresh(new_order)
     
-    # 6. Carica relazioni per la risposta , carica i dettagli dell'ordine e i prodotti
+    # 6. Carica relazioni per la risposta
     order_with_details = db.query(Order).options(
         joinedload(Order.order_details).joinedload(OrderDetail.product)
     ).filter(Order.id == new_order.id).first()
@@ -195,12 +195,94 @@ def create_order(
 
 
 @router.get("/", response_model=List[OrderListResponse])
-def get_all_orders(db: Session = Depends(get_db)):
+def get_all_orders(
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     """
-    Recupera tutti gli ordini di user ID=1
+    Recupera tutti gli ordini dell'utente autenticato
     """
     orders = db.query(Order).filter(
-        Order.user_id == TEMP_user_ID
+        Order.user_id == current_user.id  
+    ).order_by(Order.created_at.desc()).all()
+    
+    response = []
+    for order in orders:
+        items_count = db.query(OrderDetail).filter(OrderDetail.order_id == order.id).count()
+        response.append(
+            OrderListResponse(
+                id=order.id,
+                order_number=order.order_number,
+                status=order.status,
+                total=order.total,
+                created_at=order.created_at,
+                items_count=items_count
+            )
+        )
+    
+    return response
+
+
+
+# ==================== ENDPOINT ADMIN ====================
+
+@router.get("/admin/all", response_model=List[OrderListResponse])
+def get_all_orders_admin(
+    current_user: User = Depends(require_admin),
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """
+    Recupera TUTTI gli ordini di TUTTI gli utenti (SOLO ADMIN)
+    
+    Query params:
+        skip: Numero di ordini da saltare (paginazione)
+        limit: Numero massimo di ordini da restituire
+    """
+    orders = db.query(Order).order_by(
+        Order.created_at.desc()
+    ).offset(skip).limit(limit).all()
+    
+    response = []
+    for order in orders:
+        items_count = db.query(OrderDetail).filter(OrderDetail.order_id == order.id).count()
+        response.append(
+            OrderListResponse(
+                id=order.id,
+                order_number=order.order_number,
+                status=order.status,
+                total=order.total,
+                created_at=order.created_at,
+                items_count=items_count
+            )
+        )
+    
+    return response
+
+
+@router.get("/admin/{user_id}/orders", response_model=List[OrderListResponse])
+def get_user_orders_admin(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Recupera tutti gli ordini di un utente specifico (SOLO ADMIN)
+    
+    Args:
+        user_id: ID dell'utente di cui vedere gli ordini
+    """
+    # Verifica che l'utente esista
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id {user_id} not found"
+        )
+    
+    orders = db.query(Order).filter(
+        Order.user_id == user_id
     ).order_by(Order.created_at.desc()).all()
     
     response = []
@@ -221,13 +303,20 @@ def get_all_orders(db: Session = Depends(get_db)):
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
-def get_order_detail(order_id: int, db: Session = Depends(get_db)):
+def get_order_detail(
+    order_id: int,
+    current_user: User = Depends(get_current_user),  
+    db: Session = Depends(get_db)
+):
     """
     Recupera dettagli di un ordine specifico
     """
     order = db.query(Order).options(
         joinedload(Order.order_details).joinedload(OrderDetail.product)
-    ).filter(Order.id == order_id).first()
+    ).filter(
+        Order.id == order_id,
+        Order.user_id == current_user.id  
+    ).first()
     
     if not order:
         raise HTTPException(
@@ -278,10 +367,11 @@ def get_order_detail(order_id: int, db: Session = Depends(get_db)):
 def update_order_status(
     order_id: int,
     status_update: OrderStatusUpdate,
+    current_user: User = Depends(require_admin),  
     db: Session = Depends(get_db)
 ):
     """
-    Aggiorna lo stato di un ordine
+    Aggiorna lo stato di un ordine (SOLO ADMIN)
     """
     order = db.query(Order).filter(Order.id == order_id).first()
     
@@ -348,11 +438,18 @@ def update_order_status(
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-def cancel_order(order_id: int, db: Session = Depends(get_db)):
+def cancel_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     """
-    Cancella un ordine (solo se pending)
+    Cancella un ordine (solo se pending e solo il proprio)
     """
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == current_user.id  
+    ).first()
     
     if not order:
         raise HTTPException(

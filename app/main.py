@@ -8,11 +8,14 @@ from app.config import APP_NAME, APP_VERSION, ALLOWED_ORIGINS
 # Crea tabelle database
 Base.metadata.create_all(bind=engine)
 
-# Inizializza FastAPI
+# Inizializza FastAPI con security scheme
 app = FastAPI(
     title=APP_NAME,
-    description="Backend REST API per e-commerce",
-    version=APP_VERSION
+    description="Backend REST API per e-commerce con autenticazione JWT",
+    version=APP_VERSION,
+    swagger_ui_parameters={
+        "persistAuthorization": True  # Mantiene il token anche dopo refresh
+    }
 )
 
 # CORS
@@ -23,7 +26,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # ==================== HOME ====================
 
@@ -54,7 +56,8 @@ def home():
                 "login": "POST /api/users/login",
                 "profile": "GET /api/users/me",  
                 "update_profile": "PUT /api/users/me",  
-                "change_my_password": "POST /api/users/me/change-password",  
+                "change_my_password": "POST /api/users/me/change-password",
+                "verify_token": "GET /api/users/verify-token",
                 "list": "GET /api/users (admin)",
                 "get": "GET /api/users/{id} (admin)",
                 "get_by_email": "GET /api/users/email/{email} (admin)",
@@ -72,6 +75,11 @@ def home():
                 "search": "GET /api/categories/search?q=sport",  
                 "get": "GET /api/categories/{id}"
             }
+        },
+        "authentication": {
+            "type": "Bearer JWT",
+            "header": "Authorization: Bearer <token>",
+            "obtain_token": "POST /api/users/login"
         },
         "status": "running"
     }

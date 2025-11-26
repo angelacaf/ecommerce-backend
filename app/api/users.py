@@ -16,12 +16,13 @@ from app.schemas.user import (
     TokenWithUser
 )
 from app.crud import user as crud_user
-from app.utils.auth import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES  
+from app.utils.auth import create_access_token, verify_password, verify_token_with_details, ACCESS_TOKEN_EXPIRE_MINUTES  
 from app.utils.dependencies import get_current_user, require_admin
 from app.models.user import User as UserModel
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials 
 
 router = APIRouter()
-
+security = HTTPBearer()
 
 # ==================== REGISTRAZIONE & LOGIN ====================
 
@@ -107,6 +108,63 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
         "user": user  # Pydantic converte a UserPublic automaticamente
     }
 
+
+
+# ==================== VERIFICA TOKEN ====================
+
+@router.get("/users/verify-token")
+def verify_token_endpoint(
+    credentials: HTTPAuthorizationCredentials = Depends(security), 
+    db: Session = Depends(get_db)
+):
+    """
+    Verifica token JWT con dettagli completi su scadenza
+    
+    Headers richiesti:
+        Authorization: Bearer <token>
+    
+    Returns:
+        200: Token valido con dettagli utente e scadenza
+        401: Token non valido o scaduto
+    """
+    
+    # Il token è già estratto da HTTPBearer
+    token = credentials.credentials
+    
+    # Verifica il token con dettagli
+    result = verify_token_with_details(token)
+    
+    if not result['valid']:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=result['error']
+        )
+    
+    # Token valido, recupera info utente
+    payload = result['payload']
+    user_id = int(payload.get('sub'))
+    user = crud_user.get_user(db, user_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utente non trovato"
+        )
+    
+    return {
+        "valid": True,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+            "active": user.active
+        },
+        "expires_in": result['expires_in'],
+        "expires_at": result['expires_at'],
+        "message": "Token valido"
+    }
 
 # ==================== PROFILO UTENTE ====================
 

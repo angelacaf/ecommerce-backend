@@ -64,11 +64,15 @@ def home():
                 "delete": "DELETE /api/users/{id} (admin)"
             },
             "orders": {
-                "create": "POST /api/orders",
-                "list": "GET /api/orders",
+                "create": "POST /api/orders (status: pending)",
+                "initiate_payment": "POST /api/orders/{id}/initiate-payment",  # ← NUOVO
+                "confirm_payment": "POST /api/orders/{id}/confirm-payment",     # ← NUOVO
+                "list": "GET /api/orders (my orders)",
                 "get": "GET /api/orders/{id}",
-                "update_status": "PATCH /api/orders/{id}/status (admin)",
-                "cancel": "DELETE /api/orders/{id}"
+                "cancel": "DELETE /api/orders/{id} (pending only)",
+                "list_all": "GET /api/orders/admin/all (admin)",               # ← NUOVO
+                "list_user": "GET /api/orders/admin/{user_id}/orders (admin)", # ← NUOVO
+                "update_status": "PATCH /api/orders/{id}/status (admin)"
             },
             "categories": {  
                 "list": "GET /api/categories",
@@ -80,6 +84,10 @@ def home():
             "type": "Bearer JWT",
             "header": "Authorization: Bearer <token>",
             "obtain_token": "POST /api/users/login"
+        },
+        "payment": {  # ← NUOVO
+            "provider": "Stripe",
+            "flow": "1. Create order (pending) → 2. Initiate payment → 3. Pay on Stripe → 4. Confirm payment (paid)"
         },
         "status": "running"
     }

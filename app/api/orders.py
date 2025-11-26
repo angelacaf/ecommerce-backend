@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime, timezone
 from decimal import Decimal
+from pydantic import BaseModel
+import stripe
+import os
 
 from app.db_connection import get_db
 from app.models.user import User
@@ -22,10 +25,11 @@ from app.utils.dependencies import get_current_user, require_admin
 
 router = APIRouter(
     prefix="/orders",
-   # tags=["Orders"]
+    #tags=["Orders"]
 )
 
-# TEMP_user_ID = 1
+# Configura Stripe
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 
 def generate_order_number() -> str:
@@ -34,6 +38,19 @@ def generate_order_number() -> str:
     return f"ORD-{timestamp}"
 
 
+# ==================== SCHEMAS PER PAGAMENTO ====================
+
+class PaymentInitiate(BaseModel):
+    success_url: str = "http://localhost:3000/payment-success"
+    cancel_url: str = "http://localhost:3000/payment-cancel"
+
+
+class PaymentConfirmation(BaseModel):
+    session_id: str
+
+
+# ==================== CREAZIONE ORDINE ====================
+
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(
     order_data: OrderCreate,
@@ -41,21 +58,13 @@ def create_order(
     db: Session = Depends(get_db)
 ):
     """
-    Crea un nuovo ordine per l'utente autenticato
+    Crea un nuovo ordine per l'utente autenticato con status="pending"
     
     - Verifica disponibilità prodotti
     - Calcola prezzi
     - Crea ordine e dettagli
     - Aggiorna quantità disponibili
     """
-    
-    # #Verifica che user esiste
-    # user = db.query(User).filter(User.id == TEMP_user_ID).first()
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_404_NOT_FOUND,
-    #         detail=f"user with id {TEMP_user_ID} not found"
-    #     )
     
     # 1. Verifica che ci siano prodotti
     if not order_data.items:
@@ -69,7 +78,6 @@ def create_order(
     order_items = []
     
     for item in order_data.items:
-        # Recupera prodotto
         product = db.query(Product).filter(Product.id == item.product_id).first()
         
         if not product:
@@ -90,7 +98,6 @@ def create_order(
                 detail=f"Not enough stock for product '{product.name}'. Available: {product.available_quantity}, Requested: {item.quantity}"
             )
         
-        # Calcola subtotale item
         item_price = Decimal(str(product.price))
         item_subtotal = item_price * item.quantity
         subtotal += item_subtotal
@@ -106,14 +113,13 @@ def create_order(
     shipping_cost = Decimal("5.00") if subtotal < Decimal("50.00") else Decimal("0.00")
     tax = Decimal("0.00")
     discount = Decimal("0.00")
-    
     total = subtotal + shipping_cost + tax - discount
     
-    # 4. Crea ordine
+    # 4. Crea ordine PENDING (non pagato)
     new_order = Order(
         user_id=current_user.id,  
         order_number=generate_order_number(),
-        status="pending",
+        status="pending",  # ← ORDINE NON PAGATO
         subtotal=subtotal,
         shipping_cost=shipping_cost,
         tax=tax,
@@ -194,6 +200,124 @@ def create_order(
     )
 
 
+# ==================== PAGAMENTO ====================
+
+@router.post("/{order_id}/initiate-payment")
+def initiate_payment(
+    order_id: int,
+    payment_data: PaymentInitiate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Inizia il pagamento Stripe per un ordine pending
+    
+    Returns:
+        URL per Stripe Checkout
+    """
+    # Trova ordine
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    if order.status != "pending":
+        raise HTTPException(status_code=400, detail="Ordine già pagato o cancellato")
+    
+    # Crea Checkout Session Stripe
+    amount_cents = int(order.total * 100)
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'eur',
+                        'product_data': {
+                            'name': f'Ordine {order.order_number}',
+                            'description': f'{len(order.order_details)} prodotti'
+                        },
+                        'unit_amount': amount_cents,
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=payment_data.success_url + f'?session_id={{CHECKOUT_SESSION_ID}}&order_id={order.id}',
+            cancel_url=payment_data.cancel_url,
+            metadata={
+                'order_id': str(order.id),
+                'order_number': order.order_number
+            }
+        )
+        
+        return {
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id,
+            "order_id": order.id,
+            "order_number": order.order_number,
+            "total": float(order.total)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore Stripe: {str(e)}")
+
+
+@router.post("/{order_id}/confirm-payment")
+def confirm_payment(
+    order_id: int,
+    confirmation: PaymentConfirmation,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Conferma pagamento dopo ritorno da Stripe
+    
+    Cambia status da "pending" a "paid"
+    """
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == current_user.id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    
+    if order.status != "pending":
+        return {"message": "Ordine già confermato", "status": order.status}
+    
+    # Verifica con Stripe
+    try:
+        session = stripe.checkout.Session.retrieve(confirmation.session_id)
+        
+        if session.payment_status != 'paid':
+            raise HTTPException(status_code=400, detail="Pagamento non completato")
+        
+        # Aggiorna ordine a PAID
+        order.status = "paid"
+        order.paid = True
+        order.paid_at = datetime.now(timezone.utc)
+        order.payment_intent_id = confirmation.session_id
+        
+        db.commit()
+        
+        return {
+            "message": "Pagamento confermato",
+            "order_id": order.id,
+            "order_number": order.order_number,
+            "status": "paid"
+        }
+    
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=500, detail=f"Errore Stripe: {str(e)}")
+
+
+# ==================== LISTA ORDINI ====================
+
 @router.get("/", response_model=List[OrderListResponse])
 def get_all_orders(
     current_user: User = Depends(get_current_user), 
@@ -223,7 +347,6 @@ def get_all_orders(
     return response
 
 
-
 # ==================== ENDPOINT ADMIN ====================
 
 @router.get("/admin/all", response_model=List[OrderListResponse])
@@ -235,10 +358,6 @@ def get_all_orders_admin(
 ):
     """
     Recupera TUTTI gli ordini di TUTTI gli utenti (SOLO ADMIN)
-    
-    Query params:
-        skip: Numero di ordini da saltare (paginazione)
-        limit: Numero massimo di ordini da restituire
     """
     orders = db.query(Order).order_by(
         Order.created_at.desc()
@@ -269,11 +388,7 @@ def get_user_orders_admin(
 ):
     """
     Recupera tutti gli ordini di un utente specifico (SOLO ADMIN)
-    
-    Args:
-        user_id: ID dell'utente di cui vedere gli ordini
     """
-    # Verifica che l'utente esista
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
@@ -301,6 +416,8 @@ def get_user_orders_admin(
     
     return response
 
+
+# ==================== DETTAGLIO ORDINE ====================
 
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order_detail(
@@ -363,6 +480,8 @@ def get_order_detail(
     )
 
 
+# ==================== ADMIN: CAMBIO STATUS ====================
+
 @router.patch("/{order_id}/status", response_model=OrderResponse)
 def update_order_status(
     order_id: int,
@@ -386,6 +505,8 @@ def update_order_status(
     if status_update.status == "paid" and not order.paid:
         order.paid = True
         order.paid_at = datetime.now(timezone.utc)
+    elif status_update.status == "processing":
+        pass  # Nessun timestamp particolare
     elif status_update.status == "shipped":
         order.shipped_at = datetime.now(timezone.utc)
     elif status_update.status == "delivered":
@@ -437,6 +558,8 @@ def update_order_status(
     )
 
 
+# ==================== CANCELLAZIONE ====================
+
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_order(
     order_id: int,
@@ -445,6 +568,8 @@ def cancel_order(
 ):
     """
     Cancella un ordine (solo se pending e solo il proprio)
+    
+    Ripristina anche l'inventario
     """
     order = db.query(Order).filter(
         Order.id == order_id,

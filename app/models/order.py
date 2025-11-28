@@ -24,12 +24,12 @@ class Order(Base):
         tax: Tasse
         discount: Sconto applicato
         discount_code: Codice sconto usato
-        shipping_address: Indirizzo spedizione
-        shipping_city: Citta spedizione
-        shipping_postal_code: CAP spedizione
-        shipping_state: Provincia/Stato spedizione
-        shipping_country: Nazione spedizione
-        notes: Note ordine
+        shipping_address: Indirizzo spedizione (NULLABLE - compilato al pagamento)
+        shipping_city: Citta spedizione (NULLABLE)
+        shipping_postal_code: CAP spedizione (NULLABLE)
+        shipping_state: Provincia/Stato spedizione (NULLABLE)
+        shipping_country: Nazione spedizione (NULLABLE)
+        notes: Note ordine (NULLABLE)
         payment_intent_id: ID transazione pagamento
         paid: Se l'ordine è stato pagato
         paid_at: Data pagamento
@@ -58,12 +58,12 @@ class Order(Base):
     discount = Column(Numeric(10, 2), default=Decimal("0.00"))
     discount_code = Column(String(50), nullable=True)
     
-    # Indirizzo spedizione
-    shipping_address = Column(Text, nullable=False)
+    # Indirizzo spedizione - TUTTI NULLABLE (compilati al pagamento)
+    shipping_address = Column(Text, nullable=True)  #
     shipping_city = Column(String(100), nullable=True)
     shipping_postal_code = Column(String(10), nullable=True)
     shipping_state = Column(String(50), nullable=True)
-    shipping_country = Column(String(100), default="Italy")
+    shipping_country = Column(String(100), nullable=True)  
     
     # Info aggiuntive
     notes = Column(Text, nullable=True)

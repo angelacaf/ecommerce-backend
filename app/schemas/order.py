@@ -24,19 +24,16 @@ class OrderItemResponse(BaseModel):
     subtotal: Decimal
     
     class Config:
-        from_attributes = True  # Per convertire da SQLAlchemy a Pydantic
+        from_attributes = True
 
 
 # ============== ORDER (ordine completo) ==============
 class OrderCreate(BaseModel):
-    """Schema per creare un nuovo ordine (checkout)"""
+    """
+    Schema per creare un nuovo ordine MINIMALE (solo prodotti)
+    I metadati di spedizione vengono aggiunti in fase di pagamento
+    """
     items: List[OrderItemCreate] = Field(..., min_length=1, description="Prodotti nel carrello")
-    shipping_address: str = Field(..., min_length=5, description="Indirizzo di spedizione")
-    shipping_city: str = Field(..., min_length=2)
-    shipping_postal_code: str = Field(..., min_length=5, max_length=10)
-    shipping_state: Optional[str] = None
-    shipping_country: str = Field(default="Italy")
-    notes: Optional[str] = Field(None, max_length=500)
     discount_code: Optional[str] = Field(None, max_length=50)
 
     @field_validator('items')
@@ -60,11 +57,11 @@ class OrderResponse(BaseModel):
     tax: Decimal
     discount: Decimal
     discount_code: Optional[str]
-    shipping_address: str
-    shipping_city: str
-    shipping_postal_code: str
+    shipping_address: Optional[str]
+    shipping_city: Optional[str]
+    shipping_postal_code: Optional[str]
     shipping_state: Optional[str]
-    shipping_country: str
+    shipping_country: Optional[str]
     notes: Optional[str]
     paid: bool
     paid_at: Optional[datetime]
@@ -72,7 +69,7 @@ class OrderResponse(BaseModel):
     delivered_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    items: List[OrderItemResponse] = []  # Lista prodotti nell'ordine
+    items: List[OrderItemResponse] = []
     
     class Config:
         from_attributes = True
@@ -85,7 +82,7 @@ class OrderListResponse(BaseModel):
     status: str
     total: Decimal
     created_at: datetime
-    items_count: int  # Numero di prodotti
+    items_count: int
     
     class Config:
         from_attributes = True
@@ -100,19 +97,51 @@ class OrderStatusUpdate(BaseModel):
     )
 
 
+# ============== PAYMENT SCHEMAS ==============
+class PaymentInitiate(BaseModel):
+    """
+    Schema per iniziare il pagamento
+    Include i metadati dell'ordine che vengono salvati PRIMA di andare su Stripe
+    """
+    # Metadati di spedizione (AGGIUNTI QUI)
+    shipping_address: str = Field(..., min_length=5, description="Indirizzo di spedizione")
+    shipping_city: str = Field(..., min_length=2)
+    shipping_postal_code: str = Field(..., min_length=5, max_length=10)
+    shipping_state: Optional[str] = None
+    shipping_country: str = Field(default="Italy")
+    notes: Optional[str] = Field(None, max_length=500)
+    
+    # URL di ritorno da Stripe
+    success_url: str = "http://localhost:3000/payment-success"
+    cancel_url: str = "http://localhost:3000/payment-cancel"
+
+
+class PaymentConfirmation(BaseModel):
+    """Schema per confermare il pagamento dopo ritorno da Stripe"""
+    session_id: str
+
+
 # ============== EXAMPLE PAYLOADS ==============
 class OrderCreateExample:
-    """Esempio di payload per creare un ordine"""
+    """Esempio di payload per creare un ordine (SOLO PRODOTTI)"""
     example = {
         "items": [
             {"product_id": 1, "quantity": 2},
             {"product_id": 3, "quantity": 1}
         ],
+        "discount_code": "SUMMER2024"
+    }
+
+
+class PaymentInitiateExample:
+    """Esempio di payload per iniziare il pagamento (CON METADATI)"""
+    example = {
         "shipping_address": "Via Roma 123",
         "shipping_city": "Rome",
         "shipping_postal_code": "00100",
         "shipping_state": "RM",
         "shipping_country": "Italy",
         "notes": "Suonare il campanello",
-        "discount_code": "SUMMER2024"
+        "success_url": "http://localhost:3000/payment-success",
+        "cancel_url": "http://localhost:3000/payment-cancel"
     }

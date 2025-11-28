@@ -65,13 +65,13 @@ def home():
             },
             "orders": {
                 "create": "POST /api/orders (status: pending)",
-                "initiate_payment": "POST /api/orders/{id}/initiate-payment",  # ← NUOVO
-                "confirm_payment": "POST /api/orders/{id}/confirm-payment",     # ← NUOVO
+                "initiate_payment": "POST /api/orders/{id}/initiate-payment",  
+                "confirm_payment": "POST /api/orders/{id}/confirm-payment",    
                 "list": "GET /api/orders (my orders)",
                 "get": "GET /api/orders/{id}",
                 "cancel": "DELETE /api/orders/{id} (pending only)",
-                "list_all": "GET /api/orders/admin/all (admin)",               # ← NUOVO
-                "list_user": "GET /api/orders/admin/{user_id}/orders (admin)", # ← NUOVO
+                "list_all": "GET /api/orders/admin/all (admin)",               
+                "list_user": "GET /api/orders/admin/{user_id}/orders (admin)", 
                 "update_status": "PATCH /api/orders/{id}/status (admin)"
             },
             "categories": {  
@@ -85,7 +85,7 @@ def home():
             "header": "Authorization: Bearer <token>",
             "obtain_token": "POST /api/users/login"
         },
-        "payment": {  # ← NUOVO
+        "payment": {  
             "provider": "Stripe",
             "flow": "1. Create order (pending) → 2. Initiate payment → 3. Pay on Stripe → 4. Confirm payment (paid)"
         },

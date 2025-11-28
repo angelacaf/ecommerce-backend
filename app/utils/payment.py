@@ -1,10 +1,12 @@
 """
-Payment utilities - Stripe Checkout (versione semplice)
+Payment utilities - Stripe integration
 """
 import stripe
 import os
 from decimal import Decimal
+from typing import Dict, Any
 
+# Configura Stripe
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 
@@ -12,21 +14,28 @@ def create_checkout_session(
     order_id: int,
     order_number: str,
     amount: Decimal,
+    items_count: int,
     success_url: str,
     cancel_url: str
-):
+) -> Dict[str, Any]:
     """
-    Crea una Checkout Session Stripe (reindirizza a pagina Stripe)
+    Crea una Checkout Session Stripe
     
     Args:
-        order_id: ID ordine
-        order_number: Numero ordine
-        amount: Importo in euro
-        success_url: URL di ritorno dopo successo
-        cancel_url: URL di ritorno dopo cancellazione
+        order_id: ID ordine nel database
+        order_number: Numero ordine (es. ORD-20250127...)
+        amount: Importo totale in euro
+        items_count: Numero di prodotti nell'ordine
+        success_url: URL di ritorno dopo pagamento riuscito
+        cancel_url: URL di ritorno se utente annulla
     
     Returns:
-        URL della pagina Stripe
+        Dict con:
+        - checkout_url: URL della pagina Stripe per il pagamento
+        - session_id: ID della sessione Stripe
+    
+    Raises:
+        stripe.error.StripeError: In caso di errore con Stripe
     """
     # Stripe usa centesimi
     amount_cents = int(amount * 100)
@@ -39,7 +48,7 @@ def create_checkout_session(
                     'currency': 'eur',
                     'product_data': {
                         'name': f'Ordine {order_number}',
-                        'description': 'Acquisto e-commerce'
+                        'description': f'{items_count} prodotti'
                     },
                     'unit_amount': amount_cents,
                 },
@@ -61,9 +70,47 @@ def create_checkout_session(
     }
 
 
-def verify_checkout_session(session_id: str):
+def verify_payment(session_id: str) -> bool:
     """
-    Verifica che la Checkout Session sia stata pagata
+    Verifica che il pagamento Stripe sia stato completato
+    
+    Args:
+        session_id: ID della Checkout Session Stripe
+    
+    Returns:
+        True se pagato, False altrimenti
+    
+    Raises:
+        stripe.error.StripeError: In caso di errore con Stripe
     """
     session = stripe.checkout.Session.retrieve(session_id)
     return session.payment_status == 'paid'
+
+
+def get_payment_details(session_id: str) -> Dict[str, Any]:
+    """
+    Recupera dettagli completi del pagamento
+    
+    Args:
+        session_id: ID della Checkout Session Stripe
+    
+    Returns:
+        Dict con dettagli del pagamento:
+        - payment_status: 'paid', 'unpaid', 'no_payment_required'
+        - amount_total: Importo pagato (in centesimi)
+        - currency: Valuta (es. 'eur')
+        - customer_email: Email del cliente
+        - payment_intent: ID del PaymentIntent
+    
+    Raises:
+        stripe.error.StripeError: In caso di errore con Stripe
+    """
+    session = stripe.checkout.Session.retrieve(session_id)
+    
+    return {
+        'payment_status': session.payment_status,
+        'amount_total': session.amount_total,
+        'currency': session.currency,
+        'customer_email': session.customer_details.email if session.customer_details else None,
+        'payment_intent': session.payment_intent
+    }

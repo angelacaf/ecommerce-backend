@@ -59,7 +59,7 @@ class Order(Base):
     discount_code = Column(String(50), nullable=True)
     
     # Indirizzo spedizione - TUTTI NULLABLE (compilati al pagamento)
-    shipping_address = Column(Text, nullable=True)  #
+    shipping_address = Column(Text, nullable=True) 
     shipping_city = Column(String(100), nullable=True)
     shipping_postal_code = Column(String(10), nullable=True)
     shipping_state = Column(String(50), nullable=True)

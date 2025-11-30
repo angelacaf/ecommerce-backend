@@ -120,28 +120,3 @@ class PaymentConfirmation(BaseModel):
     """Schema per confermare il pagamento dopo ritorno da Stripe"""
     session_id: str
 
-
-# ============== EXAMPLE PAYLOADS ==============
-class OrderCreateExample:
-    """Esempio di payload per creare un ordine (SOLO PRODOTTI)"""
-    example = {
-        "items": [
-            {"product_id": 1, "quantity": 2},
-            {"product_id": 3, "quantity": 1}
-        ],
-        "discount_code": "SUMMER2024"
-    }
-
-
-class PaymentInitiateExample:
-    """Esempio di payload per iniziare il pagamento (CON METADATI)"""
-    example = {
-        "shipping_address": "Via Roma 123",
-        "shipping_city": "Rome",
-        "shipping_postal_code": "00100",
-        "shipping_state": "RM",
-        "shipping_country": "Italy",
-        "notes": "Suonare il campanello",
-        "success_url": "http://localhost:3000/payment-success",
-        "cancel_url": "http://localhost:3000/payment-cancel"
-    }

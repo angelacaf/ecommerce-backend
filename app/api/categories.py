@@ -5,7 +5,7 @@ from app.schemas.category import CategoryResponse
 from app.crud import category as crud_category
 
 router = APIRouter(prefix="/categories",
-                   # tags=["categories"]
+                   tags=["Categories"]
                    )
 
 @router.get("/", response_model=list[CategoryResponse])

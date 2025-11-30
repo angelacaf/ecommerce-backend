@@ -75,7 +75,7 @@ CREATE TABLE ecommerce.orders (
     tax NUMERIC(10,2) DEFAULT 0.00 CHECK (tax >= 0),
     discount NUMERIC(10,2) DEFAULT 0.00 CHECK (discount >= 0),
     discount_code VARCHAR(50),
-    shipping_address TEXT NOT NULL,
+    shipping_address TEXT,
     shipping_city VARCHAR(100),
     shipping_postal_code VARCHAR(10),
     shipping_state VARCHAR(50),

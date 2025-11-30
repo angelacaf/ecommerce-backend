@@ -21,12 +21,15 @@ from app.utils.dependencies import get_current_user, require_admin
 from app.models.user import User as UserModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"]
+)
 security = HTTPBearer()
 
 # ==================== REGISTRAZIONE & LOGIN ====================
 
-@router.post("/users/register", response_model=TokenWithUser, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=TokenWithUser, status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     """
     Registra nuovo utente e restituisce token JWT con dati pubblici
@@ -61,7 +64,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/users/login", response_model=TokenWithUser)
+@router.post("/login", response_model=TokenWithUser)
 def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     """
     Login utente e restituisce token JWT con dati pubblici
@@ -112,7 +115,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
 
 # ==================== VERIFICA TOKEN ====================
 
-@router.get("/users/verify-token")
+@router.get("/verify-token")
 def verify_token_endpoint(
     credentials: HTTPAuthorizationCredentials = Depends(security), 
     db: Session = Depends(get_db)
@@ -168,7 +171,7 @@ def verify_token_endpoint(
 
 # ==================== PROFILO UTENTE ====================
 
-@router.get("/users/me", response_model=User)
+@router.get("/me", response_model=User)
 def get_my_profile(current_user: UserModel = Depends(get_current_user)):
     """
     Ottieni profilo completo dell'utente autenticato
@@ -176,7 +179,7 @@ def get_my_profile(current_user: UserModel = Depends(get_current_user)):
     return current_user
 
 
-@router.put("/users/me", response_model=User)
+@router.put("/me", response_model=User)
 def update_my_profile(
     user_update: UserUpdate,
     current_user: UserModel = Depends(get_current_user), 
@@ -194,7 +197,7 @@ def update_my_profile(
     return updated_user
 
 
-@router.post("/users/me/change-password", status_code=status.HTTP_200_OK)
+@router.post("/me/change-password", status_code=status.HTTP_200_OK)
 def change_my_password(
     password_data: UserChangePassword,
     current_user: UserModel = Depends(get_current_user),  
@@ -219,7 +222,7 @@ def change_my_password(
 
 # ==================== ADMIN ENDPOINTS ====================
 
-@router.get("/users", response_model=list[User])
+@router.get("/", response_model=list[User])
 def list_users(
     skip: int = 0,
     limit: int = 20,
@@ -233,7 +236,7 @@ def list_users(
     return crud_user.get_users(db, skip, limit, active_only)
 
 
-@router.get("/users/email/{email}", response_model=User)
+@router.get("/email/{email}", response_model=User)
 def get_user_by_email(
     email: str,
     current_user: UserModel = Depends(require_admin),  
@@ -251,7 +254,7 @@ def get_user_by_email(
     return user
 
 
-@router.get("/users/{user_id}", response_model=User)
+@router.get("/{user_id}", response_model=User)
 def get_user(
     user_id: int,
     current_user: UserModel = Depends(require_admin), 
@@ -269,7 +272,7 @@ def get_user(
     return user
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: int,
     current_user: UserModel = Depends(require_admin),  

@@ -2,7 +2,7 @@
 CRUD operations per Product
 """
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -11,13 +11,25 @@ from app.schemas.product import ProductCreate, ProductUpdate
 # ==================== LEGGI ====================
 
 def get_product(db: Session, product_id: int) -> Optional[Product]:
-    """Ottieni un prodotto per ID"""
-    return db.query(Product).filter(Product.id == product_id).first()
+    """
+    Ottieni un prodotto per ID con la categoria inclusa
+    """
+    return db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.id == product_id)\
+        .first()
 
 
 def get_products(db: Session, skip: int = 0, limit: int = 100) -> list[Product]:
-    """Ottieni lista prodotti"""
-    return db.query(Product).filter(Product.active == True).offset(skip).limit(limit).all()
+    """
+    Ottieni lista prodotti con categorie incluse
+    """
+    return db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.active == True)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 
 def search_products_by_name(
@@ -28,7 +40,7 @@ def search_products_by_name(
     limit: int = 100
 ) -> list[Product]:
     """
-    Cerca prodotti per nome (ricerca parziale, case-insensitive)
+    Cerca prodotti per nome (ricerca parziale, case-insensitive) con categoria
     
     Args:
         db: Sessione database
@@ -45,7 +57,9 @@ def search_products_by_name(
         products = search_products_by_name(db, "shirt")
         # Trova: "Red T-Shirt", "Blue Shirt", "Shirt XL"
     """
-    query = db.query(Product).filter(Product.name.ilike(f"%{search_term}%"))
+    query = db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.name.ilike(f"%{search_term}%"))
     
     if active_only:
         query = query.filter(Product.active == True)
@@ -55,7 +69,7 @@ def search_products_by_name(
 
 def get_product_by_exact_name(db: Session, name: str) -> Optional[Product]:
     """
-    Ottieni un prodotto per nome esatto (case-insensitive)
+    Ottieni un prodotto per nome esatto (case-insensitive) con categoria
     
     Args:
         db: Sessione database
@@ -67,12 +81,15 @@ def get_product_by_exact_name(db: Session, name: str) -> Optional[Product]:
     Example:
         product = get_product_by_exact_name(db, "Red T-Shirt")
     """
-    return db.query(Product).filter(Product.name.ilike(name)).first()
+    return db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.name.ilike(name))\
+        .first()
 
 
 def get_product_by_sku(db: Session, sku: str) -> Optional[Product]:
     """
-    Ottieni un prodotto per SKU
+    Ottieni un prodotto per SKU con categoria
     
     Args:
         db: Sessione database
@@ -81,7 +98,40 @@ def get_product_by_sku(db: Session, sku: str) -> Optional[Product]:
     Returns:
         Prodotto trovato o None
     """
-    return db.query(Product).filter(Product.sku == sku).first()
+    return db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.sku == sku)\
+        .first()
+
+
+def get_products_by_category(
+    db: Session, 
+    category_id: int, 
+    active_only: bool = True,
+    skip: int = 0, 
+    limit: int = 100
+) -> list[Product]:
+    """
+    Ottieni prodotti filtrati per categoria
+    
+    Args:
+        db: Sessione database
+        category_id: ID della categoria
+        active_only: Se True, restituisce solo prodotti attivi
+        skip: Record da saltare (paginazione)
+        limit: Numero massimo di risultati
+        
+    Returns:
+        Lista di prodotti della categoria specificata
+    """
+    query = db.query(Product)\
+        .options(joinedload(Product.category))\
+        .filter(Product.category_id == category_id)
+    
+    if active_only:
+        query = query.filter(Product.active == True)
+    
+    return query.offset(skip).limit(limit).all()
 
 
 # ==================== CREA ====================
@@ -92,7 +142,9 @@ def create_product(db: Session, product: ProductCreate) -> Product:
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    return db_product
+    
+    # Ricarica con categoria
+    return get_product(db, db_product.id)
 
 
 # ==================== AGGIORNA ====================
@@ -110,7 +162,9 @@ def update_product(db: Session, product_id: int, product_update: ProductUpdate) 
     
     db.commit()
     db.refresh(db_product)
-    return db_product
+    
+    # Ricarica con categoria
+    return get_product(db, product_id)
 
 
 # ==================== ELIMINA ====================
